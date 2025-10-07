@@ -1,0 +1,62 @@
+.bg-brick-orange {
+    background-color: #c14a09;
+}
+
+.text-brick-orange {
+    color: #c14a09;
+}
+
+.border-brick-orange {
+    border-color: #c14a09;
+}
+
+.btn-hover:hover {
+    background-color: #a53e07;
+}
+
+.sidebar {
+    transition: all 0.3s ease;
+    width: 256px; /* 16rem = 256px */
+}
+
+.sidebar.collapsed {
+    width: 80px;
+}
+
+.sidebar.collapsed .nav-text,
+.sidebar.collapsed .logo-text {
+    display: none;
+}
+
+.sidebar.collapsed .menu-toggle {
+    justify-content: center;
+}
+
+.sidebar.collapsed .users-submenu {
+    display: none;
+}
+
+.content {
+    transition: margin-left 0.3s ease;
+    margin-left: 0;
+}
+
+.content.expanded {
+    margin-left: 0;
+}
+
+.users-submenu {
+    transition: all 0.3s ease;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+}
+
+.users-submenu.show {
+    max-height: 200px;
+    opacity: 1;
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+}

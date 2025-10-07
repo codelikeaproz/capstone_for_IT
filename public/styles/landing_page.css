@@ -1,0 +1,18 @@
+root{
+    --base-color:#c14a09 !important;
+}
+
+.hero-section_gradient{
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, #c14a09 0%, #5a2504 100%);
+    opacity: 0.4;
+    z-index: 0;
+}
+
+.btn-primary:hover {
+    background-color:#c14a09 !important; /* Or your custom orange */
+    border-color: #c14a09 !important;
+    color: white !important; /* Optional: make text visible */
+  }
+
