@@ -13,7 +13,7 @@
             </h1>
             <p class="text-gray-600 mt-1">Monitor and manage emergency incidents</p>
         </div>
-        
+
         <div class="flex space-x-3">
             <a href="{{ route('incidents.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus mr-2"></i>
@@ -84,7 +84,7 @@
                 <i class="fas fa-filter text-blue-500"></i>
                 Filters
             </h2>
-            
+
             <form method="GET" action="{{ route('incidents.index') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div class="form-control">
                     <select name="municipality" class="select select-bordered select-sm">
@@ -96,7 +96,7 @@
                         <option value="Manolo Fortich" {{ request('municipality') == 'Manolo Fortich' ? 'selected' : '' }}>Manolo Fortich</option>
                     </select>
                 </div>
-                
+
                 <div class="form-control">
                     <select name="severity" class="select select-bordered select-sm">
                         <option value="">All Severities</option>
@@ -106,7 +106,7 @@
                         <option value="low" {{ request('severity') == 'low' ? 'selected' : '' }}>🟢 Low</option>
                     </select>
                 </div>
-                
+
                 <div class="form-control">
                     <select name="status" class="select select-bordered select-sm">
                         <option value="">All Statuses</option>
@@ -116,7 +116,7 @@
                         <option value="closed" {{ request('status') == 'closed' ? 'selected' : '' }}>Closed</option>
                     </select>
                 </div>
-                
+
                 <div class="form-control">
                     <select name="incident_type" class="select select-bordered select-sm">
                         <option value="">All Types</option>
@@ -128,7 +128,7 @@
                         <option value="other" {{ request('incident_type') == 'other' ? 'selected' : '' }}>Other</option>
                     </select>
                 </div>
-                
+
                 <div class="flex space-x-2">
                     <button type="submit" class="btn btn-primary btn-sm flex-1">
                         <i class="fas fa-search mr-1"></i> Filter
@@ -140,7 +140,7 @@
             </form>
         </div>
     </div>
-    
+
     <!-- Incidents Table -->
     <div class="card bg-base-100 shadow-lg">
         <div class="card-body">
@@ -162,8 +162,12 @@
                         </thead>
                         <tbody>
                             @foreach($incidents as $incident)
-                                <tr class="hover cursor-pointer" onclick="window.location='{{ route('incidents.show', $incident) }}'">
-                                    <td class="font-mono font-bold text-blue-600">{{ $incident->incident_number }}</td>
+                                <tr class="hover">
+                                    <td class="font-mono font-bold text-blue-600">
+                                        <a href="{{ route('incidents.show', $incident) }}" class="hover:underline">
+                                            {{ $incident->incident_number }}
+                                        </a>
+                                    </td>
                                     <td>
                                         <div class="flex items-center space-x-2">
                                             @switch($incident->incident_type)
@@ -211,7 +215,7 @@
                                             <span class="text-gray-400">Unassigned</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td onclick="event.stopPropagation()">
                                         <div class="dropdown dropdown-end">
                                             <label tabindex="0" class="btn btn-ghost btn-sm btn-circle">
                                                 <i class="fas fa-ellipsis-v"></i>
@@ -223,7 +227,7 @@
                                                 @endif
                                                 @if(Auth::user()->role === 'admin')
                                                     <li>
-                                                        <button type="button" onclick="showDeleteModal({{ $incident->id }})" class="text-red-600 w-full text-left px-4 py-2 hover:bg-gray-100">
+                                                        <button type="button" onclick="event.stopPropagation(); showDeleteModal({{ $incident->id }})" class="text-red-600 w-full text-left px-4 py-2 hover:bg-gray-100">
                                                             <i class="fas fa-trash mr-2"></i>Delete
                                                         </button>
                                                     </li>
@@ -235,7 +239,6 @@
                             @endforeach
                         </tbody>
                     </table>
-
                     <!-- Pagination -->
                     @if($incidents->hasPages())
                         <div class="flex justify-center mt-6">
@@ -298,5 +301,42 @@ setTimeout(function() {
         window.location.reload();
     }
 }, 30000);
+
+// Handle delete form submission with toast notification
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForm = document.getElementById('deleteForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const action = this.action;
+
+            fetch(action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessToast(data.message || 'Incident deleted successfully!');
+                    setTimeout(() => {
+                        window.location.href = '{{ route('incidents.index') }}';
+                    }, 1500);
+                } else {
+                    showErrorToast(data.message || 'Failed to delete incident.');
+                }
+            })
+            .catch(error => {
+                showErrorToast('An error occurred while deleting the incident.');
+                console.error('Error:', error);
+            });
+        });
+    }
+});
 </script>
 @endsection

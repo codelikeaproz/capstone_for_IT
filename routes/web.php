@@ -79,6 +79,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/incidents/{incident}', [IncidentController::class, 'update'])->name('incidents.update');
     Route::delete('/incidents/{incident}', [IncidentController::class, 'destroy'])->name('incidents.destroy');
 
+    // Location API routes
+    Route::get('/api/municipalities', [IncidentController::class, 'getMunicipalities'])->name('api.municipalities');
+    Route::get('/api/barangays', [IncidentController::class, 'getBarangays'])->name('api.barangays');
+
     // ====================
     // VEHICLE MANAGEMENT
     // ====================

@@ -340,10 +340,14 @@ A comprehensive emergency management platform that centralizes incident reportin
 
 ### Remaining Development
 - 🚧 **Incident Management**: Complete CRUD operations
+- 🚧 **User Management**: Complete User Management CRUD operations , asisgn user roles /  Admun roles / Staff roles
+- 🚧 **Victim Management**: Complete CRUD operations / update 
+- 🚧 **Staff View role**: Complete CRUD operations / Views
 - 🚧 **Mobile Interface**: Responder mobile optimization
 - 🚧 **Advanced Analytics**: Complete reporting system
 - 🚧 **Testing & QA**: Comprehensive system testing
 - 🚧 **Documentation**: User manuals and admin guides
+
 
 ### Go-Live Requirements
 - **Data Migration**: Import existing incident data

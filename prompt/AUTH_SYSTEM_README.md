@@ -111,7 +111,7 @@ New fields added to users table:
 - `two_factor_code`: Current 2FA code
 - `two_factor_expires_at`: Code expiration timestamp
 - `failed_login_attempts`: Counter for failed logins
-- `locked_until`: Account lock expiration
+- `locked_until`: Account lock expiration  <!--  " dont apply yet  "     -->
 - `email_verification_token`: Email verification token
 
 ### Routes Structure

@@ -21,7 +21,7 @@ class SystemLogsController extends Controller
         $logType = $request->get('log_type', '');
         $dateFrom = $request->get('date_from', '');
         $dateTo = $request->get('date_to', '');
-        $perPage = $request->get('per_page', 25);
+        $perPage = 10; // Fixed pagination limit
 
         // Build query for logs
         $logsQuery = DB::table('activity_log')
@@ -40,7 +40,8 @@ class SystemLogsController extends Controller
                 'users.last_name',
                 'users.email',
                 'users.role',
-                'users.municipality'
+                'users.municipality',
+                DB::raw("CONCAT(COALESCE(users.first_name, ''), ' ', COALESCE(users.last_name, '')) as causer_name")
             );
 
         // Apply filters
@@ -91,6 +92,11 @@ class SystemLogsController extends Controller
         // Paginate results
         $logs = $logsQuery->paginate($perPage)->appends($request->except('page'));
 
+        // Prepare log data for frontend
+        $logs->getCollection()->transform(function ($log) {
+            return $this->prepareLogData($log);
+        });
+
         // Get statistics
         $stats = $this->getLogStatistics();
 
@@ -99,25 +105,53 @@ class SystemLogsController extends Controller
 
         // Return view with data
         return view('SystemLogs.Index', compact(
-            'logs', 'stats', 'userActivity', 'search', 'logType', 'dateFrom', 'dateTo', 'perPage'
+            'logs', 'stats', 'userActivity', 'search', 'logType', 'dateFrom', 'dateTo'
         ));
+    }
+
+    private function prepareLogData($log)
+    {
+        // Parse properties if exists
+        $properties = $log->properties ? json_decode($log->properties, true) : null;
+
+        // Determine causer name
+        $causerName = ($log->first_name && $log->last_name)
+            ? trim($log->first_name . ' ' . $log->last_name)
+            : 'System';
+
+        // Add prepared data to log object
+        $log->log_details = [
+            'id' => $log->id,
+            'description' => $log->description,
+            'log_name' => $log->log_name,
+            'subject_type' => $log->subject_type,
+            'subject_id' => $log->subject_id,
+            'causer' => $causerName,
+            'email' => $log->email,
+            'role' => $log->role,
+            'municipality' => $log->municipality,
+            'created_at' => $log->created_at,
+            'properties' => $properties,
+        ];
+
+        return $log;
     }
 
     private function getLogStatistics()
     {
         $totalLogs = DB::table('activity_log')->count();
         $todayLogs = DB::table('activity_log')->whereDate('created_at', today())->count();
-        
+
         $successfulLogins = DB::table('activity_log')
             ->where('log_name', 'login')
             ->where('description', 'LIKE', '%Successful%')
             ->count();
-            
+
         $failedLogins = DB::table('activity_log')
             ->where('log_name', 'login')
             ->where('description', 'LIKE', '%Failed%')
             ->count();
-            
+
         $activeUsersToday = DB::table('activity_log')
             ->join('users', 'activity_log.causer_id', '=', 'users.id')
             ->whereDate('activity_log.created_at', today())

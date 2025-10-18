@@ -171,12 +171,65 @@
     </div>
     @include("Components.Footer")
 
+    <!-- Toast Notifications -->
+    @if(session('success'))
+        <div class="toast toast-top toast-end z-[9999]">
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="toast toast-top toast-end z-[9999]">
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{{ session('error') }}</span>
+            </div>
+        </div>
+    @endif
+
+    @if(session('warning'))
+        <div class="toast toast-top toast-end z-[9999]">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>{{ session('warning') }}</span>
+            </div>
+        </div>
+    @endif
+
+    @if(session('info'))
+        <div class="toast toast-top toast-end z-[9999]">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <span>{{ session('info') }}</span>
+            </div>
+        </div>
+    @endif
+
     <!-- Leaflet JS for maps -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
     <!-- Global Toast Functions -->
     <script>
+        // Auto-hide toast notifications after 3 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const toasts = document.querySelectorAll('.toast');
+                toasts.forEach(function(toast) {
+                    toast.style.transition = 'opacity 0.5s ease-out';
+                    toast.style.opacity = '0';
+                    setTimeout(function() {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 500);
+                });
+            }, 3000);
+        });
+
         // Global toast notification functions
         function showSuccessToast(message) {
             const toast = document.createElement('div');
@@ -190,9 +243,13 @@
             document.body.appendChild(toast);
 
             setTimeout(() => {
-                if (document.body.contains(toast)) {
-                    document.body.removeChild(toast);
-                }
+                toast.style.transition = 'opacity 0.5s ease-out';
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 500);
             }, 3000);
         }
 
@@ -208,9 +265,13 @@
             document.body.appendChild(toast);
 
             setTimeout(() => {
-                if (document.body.contains(toast)) {
-                    document.body.removeChild(toast);
-                }
+                toast.style.transition = 'opacity 0.5s ease-out';
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 500);
             }, 3000);
         }
 
@@ -226,9 +287,13 @@
             document.body.appendChild(toast);
 
             setTimeout(() => {
-                if (document.body.contains(toast)) {
-                    document.body.removeChild(toast);
-                }
+                toast.style.transition = 'opacity 0.5s ease-out';
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 500);
             }, 3000);
         }
     </script>

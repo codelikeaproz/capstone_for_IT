@@ -4,9 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>No Internet Connection</title>
+    <title>update victim status</title>
 </head>
 <body>
 
+    {{-- can be updated is the status is it refered ? or died cirtical  --}}
+    <form action="">
+        @csrf
+
+
+
+
+    </form>
+    
 </body>
 </html>

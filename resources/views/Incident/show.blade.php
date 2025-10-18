@@ -3,7 +3,7 @@
 @section('title', 'Incident Details - ' . $incident->incident_number)
 
 @section('content')
-<div class="container mx-auto px-4 py-0">
+<div class="container mx-auto px-4 py-6">
     <!-- Header Section -->
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 space-y-4 lg:space-y-0">
         <div>
@@ -73,7 +73,7 @@
                             <div>{{ $incident->formatted_incident_date }}</div>
                         </div>
                         
-                        <div>
+                        <div class="md:col-span-2">
                             <label class="label font-semibold">Location</label>
                             <div>{{ $incident->location }}</div>
                         </div>
@@ -84,7 +84,7 @@
                         </div>
                         
                         @if($incident->latitude && $incident->longitude)
-                            <div class="md:col-span-2">
+                            <div>
                                 <label class="label font-semibold">GPS Coordinates</label>
                                 <div class="text-sm">
                                     Lat: {{ $incident->latitude }}, Lng: {{ $incident->longitude }}

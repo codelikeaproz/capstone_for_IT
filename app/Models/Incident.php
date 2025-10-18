@@ -19,6 +19,7 @@ class Incident extends Model
         'status',
         'location',
         'municipality',
+        'barangay',
         'latitude',
         'longitude',
         'description',
@@ -36,6 +37,7 @@ class Incident extends Model
         'assigned_vehicle_id',
         'reported_by',
         'photos',
+        'videos',
         'documents',
         'response_time',
         'resolved_at',
@@ -47,6 +49,7 @@ class Incident extends Model
         'response_time' => 'datetime',
         'resolved_at' => 'datetime',
         'photos' => 'array',
+        'videos' => 'array',
         'documents' => 'array',
         'vehicle_involved' => 'boolean',
         'property_damage_estimate' => 'decimal:2',
@@ -145,14 +148,14 @@ class Incident extends Model
         $lastIncident = self::where('incident_number', 'like', "INC-{$year}-%")
                            ->orderBy('id', 'desc')
                            ->first();
-        
+
         if ($lastIncident) {
             $lastNumber = intval(substr($lastIncident->incident_number, -3));
             $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
         } else {
             $newNumber = '001';
         }
-        
+
         return "INC-{$year}-{$newNumber}";
     }
 
@@ -182,5 +185,5 @@ class Incident extends Model
         }
     }
 
-  
+
 }

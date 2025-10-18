@@ -3,7 +3,7 @@
 @section('title', 'Edit Incident - ' . $incident->incident_number)
 
 @section('content')
-<div class="container mx-auto px-4 py-0">
+<div class="container mx-auto px-4 py-6">
     <div class="bg-white rounded-lg shadow-lg p-6">
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold text-gray-800">
@@ -122,7 +122,7 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Location -->
-                        <div class="form-control">
+                        <div class="form-control md:col-span-2">
                             <label class="label">
                                 <span class="label-text font-medium">Location <span class="text-red-500">*</span></span>
                             </label>
@@ -148,7 +148,6 @@
                                 <option value="Don Carlos" {{ $incident->municipality == 'Don Carlos' ? 'selected' : '' }}>Don Carlos</option>
                                 <option value="Quezon" {{ $incident->municipality == 'Quezon' ? 'selected' : '' }}>Quezon</option>
                                 <option value="Manolo Fortich" {{ $incident->municipality == 'Manolo Fortich' ? 'selected' : '' }}>Manolo Fortich</option>
-                                <!-- Add more municipalities as needed -->
                             </select>
                             @error('municipality')
                                 <label class="label">
@@ -158,33 +157,43 @@
                         </div>
 
                         <!-- GPS Coordinates -->
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">Latitude</span>
-                            </label>
-                            <input type="number" step="any" name="latitude" 
-                                   class="input input-bordered @error('latitude') input-error @enderror" 
-                                   placeholder="e.g. 8.1234567" value="{{ old('latitude', $incident->latitude) }}">
-                            @error('latitude')
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="form-control">
                                 <label class="label">
-                                    <span class="label-text-alt text-red-500">{{ $message }}</span>
+                                    <span class="label-text font-medium">Latitude</span>
                                 </label>
-                            @enderror
-                        </div>
+                                <input type="number" step="any" name="latitude" 
+                                       class="input input-bordered @error('latitude') input-error @enderror" 
+                                       placeholder="e.g. 8.1234567" value="{{ old('latitude', $incident->latitude) }}">
+                                @error('latitude')
+                                    <label class="label">
+                                        <span class="label-text-alt text-red-500">{{ $message }}</span>
+                                    </label>
+                                @enderror
+                            </div>
 
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">Longitude</span>
-                            </label>
-                            <input type="number" step="any" name="longitude" 
-                                   class="input input-bordered @error('longitude') input-error @enderror" 
-                                   placeholder="e.g. 125.1234567" value="{{ old('longitude', $incident->longitude) }}">
-                            @error('longitude')
+                            <div class="form-control">
                                 <label class="label">
-                                    <span class="label-text-alt text-red-500">{{ $message }}</span>
+                                    <span class="label-text font-medium">Longitude</span>
                                 </label>
-                            @enderror
+                                <input type="number" step="any" name="longitude" 
+                                       class="input input-bordered @error('longitude') input-error @enderror" 
+                                       placeholder="e.g. 125.1234567" value="{{ old('longitude', $incident->longitude) }}">
+                                @error('longitude')
+                                    <label class="label">
+                                        <span class="label-text-alt text-red-500">{{ $message }}</span>
+                                    </label>
+                                @enderror
+                            </div>
                         </div>
+                    </div>
+                    
+                    <!-- Get Location Button -->
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="getLocation()">
+                            <i class="fas fa-location-arrow mr-2"></i>Get Current Location
+                        </button>
+                        <span class="text-sm text-gray-500 ml-2">Uses your device's GPS</span>
                     </div>
                 </div>
             </div>
@@ -213,59 +222,70 @@
                 </div>
             </div>
 
-            <!-- Photos Gallery -->
-            @if($incident->photos && count($incident->photos) > 0)
-                <div class="card bg-base-100 shadow-sm">
-                    <div class="card-body">
-                        <h2 class="card-title text-lg mb-4">
-                            <i class="fas fa-images text-green-500"></i>
-                            Current Incident Photos
-                        </h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                            @foreach($incident->photos as $photo)
-                                <div class="aspect-square overflow-hidden rounded-lg border">
-                                    <img src="{{ asset('storage/' . $photo) }}" 
-                                         alt="Incident photo" 
-                                         class="w-full h-full object-cover">
-                                </div>
-                            @endforeach
-                        </div>
-                        <div class="text-sm text-gray-500">
-                            <i class="fas fa-info-circle"></i> The photos above are already attached to this incident.
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            <!-- Add More Photos -->
+            <!-- Media Upload -->
             <div class="card bg-base-100 shadow-sm">
                 <div class="card-body">
                     <h2 class="card-title text-lg mb-4">
-                        <i class="fas fa-plus-circle text-green-500"></i>
-                        Add More Photos
+                        <i class="fas fa-camera text-green-500"></i>
+                        Media Upload
                     </h2>
-                    
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Upload Additional Photos</span>
-                            <span class="label-text-alt">You can upload up to 5 photos (max 2MB each)</span>
-                        </label>
-                        <input type="file" name="photos[]" 
-                               class="file-input file-input-bordered @error('photos') file-input-error @enderror" 
-                               accept="image/*" multiple>
-                        <div class="text-sm text-gray-500 mt-1">
-                            Supported formats: JPG, PNG, GIF. Maximum file size: 2MB per photo.
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Photos Upload -->
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">Upload Additional Photos</span>
+                                <span class="label-text-alt">Up to 5 photos (max 2MB each)</span>
+                            </label>
+                            <input
+                                type="file"
+                                name="photos[]"
+                                class="file-input file-input-bordered @error('photos') file-input-error @enderror"
+                                accept="image/*"
+                                multiple
+                            >
+                            <div class="text-sm text-gray-500 mt-1">
+                                Supported formats: JPG, PNG, GIF
+                            </div>
+                            @error('photos')
+                                <label class="label">
+                                    <span class="label-text-alt text-red-500">{{ $message }}</span>
+                                </label>
+                            @enderror
+                            @error('photos.*')
+                                <label class="label">
+                                    <span class="label-text-alt text-red-500">{{ $message }}</span>
+                                </label>
+                            @enderror
                         </div>
-                        @error('photos')
+
+                        <!-- Videos Upload -->
+                        <div class="form-control">
                             <label class="label">
-                                <span class="label-text-alt text-red-500">{{ $message }}</span>
+                                <span class="label-text font-medium">Upload Videos</span>
+                                <span class="label-text-alt">Up to 2 videos (max 10MB each)</span>
                             </label>
-                        @enderror
-                        @error('photos.*')
-                            <label class="label">
-                                <span class="label-text-alt text-red-500">{{ $message }}</span>
-                            </label>
-                        @enderror
+                            <input
+                                type="file"
+                                name="videos[]"
+                                class="file-input file-input-bordered @error('videos') file-input-error @enderror"
+                                accept="video/*"
+                                multiple
+                            >
+                            <div class="text-sm text-gray-500 mt-1">
+                                Supported formats: MP4, WebM, MOV
+                            </div>
+                            @error('videos')
+                                <label class="label">
+                                    <span class="label-text-alt text-red-500">{{ $message }}</span>
+                                </label>
+                            @enderror
+                            @error('videos.*')
+                                <label class="label">
+                                    <span class="label-text-alt text-red-500">{{ $message }}</span>
+                                </label>
+                            @enderror
+                        </div>
                     </div>
                 </div>
             </div>
@@ -517,4 +537,60 @@
         </form>
     </div>
 </div>
+
+<script>
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            document.querySelector('input[name="latitude"]').value = position.coords.latitude;
+            document.querySelector('input[name="longitude"]').value = position.coords.longitude;
+            
+            // Show success message using the existing toast system
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-top toast-end';
+            toast.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Location captured successfully!</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        }, function(error) {
+            // Show error message
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-top toast-end';
+            toast.innerHTML = `
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Failed to get location: ${error.message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        });
+    } else {
+        // Show error message
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-top toast-end';
+        toast.innerHTML = `
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Geolocation is not supported by this browser.</span>
+            </div>
+        `;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 3000);
+    }
+}
+</script>
 @endsection
