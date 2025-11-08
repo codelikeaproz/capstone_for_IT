@@ -3,13 +3,13 @@
 @section('title', 'User Management - BukidnonAlert')
 
 @section('content')
-<div class="container mx-auto px-4 py-6">
+<div class="container max-w-full px-6 py-6">
     <!-- Header with Breadcrumbs -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
             <div class="flex items-center gap-2 text-sm breadcrumbs mb-4">
                 <ul>
-                    <li><a href="{{ route('dashboard') }}"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="{{ route('dashboard') }}"><i class="fas fa-home "></i> Home</a></li>
                     <li>Users</li>
                 </ul>
             </div>
@@ -261,13 +261,14 @@
 
             <!-- Pagination -->
             @if($users->hasPages())
-                <div class="p-4 border-t">
+                <div class="p-4 border-t bg-white">
                     {{ $users->links() }}
                 </div>
             @endif
         </div>
     </div>
 </div>
+@endsection
 
 <!-- Delete Confirmation Modal -->
 <dialog id="deleteModal" class="modal">
@@ -293,8 +294,6 @@
     </form>
 </dialog>
 
-@endsection
-
 @push('scripts')
 <script>
     function deleteUser(userId, userName) {
@@ -306,6 +305,100 @@
         form.action = `/users/${userId}`;
         modal.showModal();
     }
+
+    // Handle delete form submission with AJAX
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteForm = document.getElementById('deleteForm');
+        if (deleteForm) {
+            let isDeleting = false;
+
+            deleteForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                if (isDeleting) {
+                    console.log('Delete already in progress...');
+                    return;
+                }
+
+                isDeleting = true;
+
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const cancelBtn = this.querySelector('button[type="button"]');
+                const originalText = submitBtn.innerHTML;
+
+                // Disable buttons and show loading
+                submitBtn.disabled = true;
+                cancelBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+
+                const formData = new FormData(this);
+                const action = this.action;
+
+                fetch(action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+                        }).catch(() => {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        console.log('Delete successful, showing toast...');
+
+                        // Close modal
+                        setTimeout(() => {
+                            deleteModal.close();
+                        }, 100);
+
+                        // Show success toast
+                        setTimeout(() => {
+                            showSuccessToast(data.message || 'User deleted successfully!');
+                        }, 200);
+
+                        // Redirect after toast is visible
+                        setTimeout(() => {
+                            window.location.href = '{{ route('users.index') }}';
+                        }, 2000);
+                    } else {
+                        submitBtn.disabled = false;
+                        cancelBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                        isDeleting = false;
+                        deleteModal.close();
+
+                        // Show error toast
+                        setTimeout(() => {
+                            showErrorToast(data.message || 'Failed to delete user.');
+                        }, 200);
+                    }
+                })
+                .catch(error => {
+                    submitBtn.disabled = false;
+                    cancelBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    isDeleting = false;
+                    deleteModal.close();
+
+                    // Show error toast
+                    setTimeout(() => {
+                        showErrorToast(error.message || 'An error occurred while deleting the user.');
+                    }, 200);
+                    console.error('Delete error:', error);
+                });
+            });
+        }
+    });
 
     function toggleUserStatus(userId, currentStatus) {
         if (!confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this user?`)) {

@@ -340,10 +340,10 @@
                         </h2>
                         
                         <div id="equipment-list">
-                            @if($vehicle->equipment_list && count($vehicle->equipment_list) > 0)
+                            @if(!empty($vehicle->equipment_list))
                                 @foreach($vehicle->equipment_list as $index => $equipment)
                                     <div class="flex space-x-2 mb-2 equipment-item">
-                                        <input type="text" name="equipment_list[]" value="{{ $equipment }}" 
+                                        <input type="text" name="equipment_list[]" value="{{ $equipment }}"
                                                placeholder="Equipment item"
                                                class="input input-bordered flex-1">
                                         <button type="button" onclick="removeEquipment(this)" class="btn btn-outline btn-sm">

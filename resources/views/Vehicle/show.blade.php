@@ -213,14 +213,14 @@
             </div>
 
             <!-- Equipment List -->
-            @if($vehicle->equipment_list && count($vehicle->equipment_list) > 0)
+            @if(!empty($vehicle->equipment_list))
                 <div class="card bg-base-100 shadow-lg">
                     <div class="card-body">
                         <h2 class="card-title text-xl mb-4">
                             <i class="fas fa-toolbox text-orange-500"></i>
                             Equipment List
                         </h2>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                             @foreach($vehicle->equipment_list as $equipment)
                                 <div class="flex items-center space-x-2">

@@ -114,8 +114,9 @@
                     </div>
 
                     <form method="GET" action="{{ route('system.logs') }}">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                            <div class="form-control">
+                        <div class="flex items-end gap-4">
+                            <!-- Search Input -->
+                            <div class="form-control flex-1">
                                 <label for="search" class="label">
                                     <span class="label-text font-semibold text-gray-700">Search</span>
                                 </label>
@@ -124,12 +125,13 @@
                                        class="input input-bordered w-full">
                             </div>
 
-                            <div class="form-control">
+                            <!-- Logs Type Select -->
+                            <div class="form-control w-64">
                                 <label for="log_type" class="label">
-                                    <span class="label-text font-semibold text-gray-700">Log Type</span>
+                                    <span class="label-text font-semibold text-gray-700">Logs Type</span>
                                 </label>
                                 <select name="log_type" id="log_type" class="select select-bordered w-full">
-                                    <option value="">All Types</option>
+                                    <option value="" {{ $logType === '' ? 'selected' : '' }}>All Log Types</option>
                                     <option value="activity" {{ $logType === 'activity' ? 'selected' : '' }}>General Activity</option>
                                     <option value="login" {{ $logType === 'login' ? 'selected' : '' }}>Login Logs</option>
                                     <option value="created" {{ $logType === 'created' ? 'selected' : '' }}>Created Records</option>
@@ -138,36 +140,21 @@
                                 </select>
                             </div>
 
-                            <div class="form-control">
-                                <label for="date_from" class="label">
-                                    <span class="label-text font-semibold text-gray-700">From Date</span>
-                                </label>
-                                <input type="date" name="date_from" id="date_from" value="{{ $dateFrom }}"
-                                       class="input input-bordered w-full">
+                            <!-- Action Buttons -->
+                            <div class="flex gap-2">
+                                <button type="submit" class="btn btn-primary gap-2">
+                                    <i class="fas fa-search"></i>
+                                    <span>Apply Filters</span>
+                                </button>
+                                <a href="{{ route('system.logs') }}" class="btn btn-outline gap-2">
+                                    <i class="fas fa-times"></i>
+                                    <span>Clear</span>
+                                </a>
+                                <button type="button" id="autoRefreshBtn" onclick="toggleAutoRefresh()" class="btn btn-success gap-2">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <span>Auto-refresh</span>
+                                </button>
                             </div>
-
-                            <div class="form-control">
-                                <label for="date_to" class="label">
-                                    <span class="label-text font-semibold text-gray-700">To Date</span>
-                                </label>
-                                <input type="date" name="date_to" id="date_to" value="{{ $dateTo }}"
-                                       class="input input-bordered w-full">
-                            </div>
-                        </div>
-
-                        <div class="flex flex-wrap gap-3 justify-end">
-                            <button type="submit" class="btn btn-primary gap-2">
-                                <i class="fas fa-search"></i>
-                                <span>Apply Filters</span>
-                            </button>
-                            <a href="{{ route('system.logs') }}" class="btn btn-outline gap-2">
-                                <i class="fas fa-times"></i>
-                                <span>Clear</span>
-                            </a>
-                            <button type="button" id="autoRefreshBtn" onclick="toggleAutoRefresh()" class="btn btn-success gap-2">
-                                <i class="fas fa-sync-alt"></i>
-                                <span>Auto-refresh</span>
-                            </button>
                         </div>
                     </form>
                 </div>
@@ -194,12 +181,30 @@
                     <table class="table table-zebra">
                         <thead>
                             <tr>
-                                <th>Time</th>
-                                <th>Type</th>
-                                <th>User</th>
-                                <th>Action</th>
-                                <th>IP Address</th>
-                                <th class="text-center">Details</th>
+                                <th class="bg-gray-100">
+                                    <i class="fas fa-clock mr-1 text-gray-600"></i>
+                                    Time
+                                </th>
+                                <th class="bg-gray-100">
+                                    <i class="fas fa-tag mr-1 text-gray-600"></i>
+                                    Type
+                                </th>
+                                <th class="bg-gray-100">
+                                    <i class="fas fa-user mr-1 text-gray-600"></i>
+                                    User
+                                </th>
+                                <th class="bg-gray-100">
+                                    <i class="fas fa-info-circle mr-1 text-gray-600"></i>
+                                    Action
+                                </th>
+                                <th class="bg-gray-100">
+                                    <i class="fas fa-globe mr-1 text-gray-600"></i>
+                                    IP Address
+                                </th>
+                                <th class="text-center bg-gray-100">
+                                    <i class="fas fa-cog mr-1 text-gray-600"></i>
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -207,35 +212,46 @@
                     <tr>
                         <td class="whitespace-nowrap">
                             <div class="flex flex-col">
-                                <span class="font-medium">{{ \Carbon\Carbon::parse($log->created_at)->format('M d') }}</span>
-                                <span class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($log->created_at)->format('H:i') }}</span>
+                                <span class="font-medium text-gray-900">{{ \Carbon\Carbon::parse($log->created_at)->timezone('Asia/Manila')->format('M d, Y') }}</span>
+                                <span class="text-xs text-gray-600">{{ \Carbon\Carbon::parse($log->created_at)->timezone('Asia/Manila')->format('g:i A') }}</span>
                             </div>
                         </td>
                         <td class="whitespace-nowrap">
                             @if($log->log_name === 'login')
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                    {{ str_contains($log->description, 'Successful') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    <i class="fas fa-sign-in-alt mr-1"></i>
-                                    {{ str_contains($log->description, 'Successful') ? 'Login' : 'Failed' }}
-                                </span>
+                                @if(str_contains($log->description, 'completed login') || str_contains($log->description, 'logged in'))
+                                    <span class="badge badge-success gap-1">
+                                        <i class="fas fa-sign-in-alt"></i>
+                                        Login
+                                    </span>
+                                @elseif(str_contains($log->description, 'logged out'))
+                                    <span class="badge badge-ghost gap-1">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        Logout
+                                    </span>
+                                @else
+                                    <span class="badge badge-error gap-1">
+                                        <i class="fas fa-times-circle"></i>
+                                        Failed
+                                    </span>
+                                @endif
                             @elseif(str_contains($log->description, 'created'))
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    <i class="fas fa-plus-circle mr-1"></i>
+                                <span class="badge badge-info gap-1">
+                                    <i class="fas fa-plus-circle"></i>
                                     Created
                                 </span>
                             @elseif(str_contains($log->description, 'updated'))
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                    <i class="fas fa-edit mr-1"></i>
+                                <span class="badge badge-warning gap-1">
+                                    <i class="fas fa-edit"></i>
                                     Updated
                                 </span>
                             @elseif(str_contains($log->description, 'deleted'))
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    <i class="fas fa-trash-alt mr-1"></i>
+                                <span class="badge badge-error gap-1">
+                                    <i class="fas fa-trash-alt"></i>
                                     Deleted
                                 </span>
                             @else
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    <i class="fas fa-cogs mr-1"></i>
+                                <span class="badge badge-ghost gap-1">
+                                    <i class="fas fa-cogs"></i>
                                     Activity
                                 </span>
                             @endif
@@ -243,18 +259,30 @@
                         <td class="whitespace-nowrap">
                             @if($log->first_name || $log->last_name)
                                 <div class="flex items-center">
-                                    <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center mr-2">
-                                        <span class="text-xs font-medium">
-                                            {{ substr($log->first_name, 0, 1) }}{{ substr($log->last_name, 0, 1) }}
-                                        </span>
-                                    </div>
                                     <div>
                                         <div class="text-sm font-medium text-gray-900">
                                             {{ $log->first_name }} {{ $log->last_name }}
                                         </div>
                                         @if($log->role)
-                                            <span class="inline-flex items-center px-1 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 capitalize">
-                                                {{ $log->role }}
+                                            @php
+                                                $roleBadgeClass = match($log->role) {
+                                                    'admin' => 'badge-error',
+                                                    'staff' => 'badge-info',
+                                                    'responder' => 'badge-warning',
+                                                    'citizen' => 'badge-success',
+                                                    default => 'badge-ghost'
+                                                };
+                                                $roleIcon = match($log->role) {
+                                                    'admin' => 'fa-user-shield',
+                                                    'staff' => 'fa-user-tie',
+                                                    'responder' => 'fa-user-nurse',
+                                                    'citizen' => 'fa-user',
+                                                    default => 'fa-user'
+                                                };
+                                            @endphp
+                                            <span class="badge {{ $roleBadgeClass }} badge-sm gap-1">
+                                                <i class="fas {{ $roleIcon }}"></i>
+                                                {{ ucfirst($log->role) }}
                                             </span>
                                         @endif
                                     </div>
@@ -293,9 +321,33 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            <button onclick='showLogDetails(@json($log->log_details))' class="btn btn-ghost btn-xs btn-circle">
-                                <i class="fas fa-eye text-primary"></i>
-                            </button>
+                            <div class="dropdown dropdown-end">
+                                <label tabindex="0" class="btn btn-ghost btn-xs btn-circle">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </label>
+                                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-52">
+                                    <li>
+                                        <a onclick='showLogDetails(@json($log->log_details))'>
+                                            <i class="fas fa-eye text-info"></i>
+                                            View Details
+                                        </a>
+                                    </li>
+                                    @if(str_contains($log->description, 'deleted'))
+                                        <li>
+                                            <a onclick="recoverRecord({{ $log->subject_id }}, '{{ $log->subject_type }}')" class="text-success">
+                                                <i class="fas fa-undo"></i>
+                                                Recover Record
+                                            </a>
+                                        </li>
+                                    @endif
+                                    <li>
+                                        <a onclick="exportLog({{ $log->id }})">
+                                            <i class="fas fa-download text-primary"></i>
+                                            Export Log
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </td>
                     </tr>
                     @empty
@@ -353,15 +405,17 @@ function showLogDetails(logData) {
     const modal = document.getElementById('logDetailsModal');
     const content = document.getElementById('logDetailsContent');
 
-    // Format date
+    // Format date to Philippine Standard Time (12-hour format with AM/PM)
     const date = new Date(logData.created_at);
     const formattedDate = date.toLocaleString('en-US', {
+        timeZone: 'Asia/Manila',
         month: 'short',
         day: 'numeric',
         year: 'numeric',
-        hour: '2-digit',
+        hour: 'numeric',
         minute: '2-digit',
-        second: '2-digit'
+        second: '2-digit',
+        hour12: true
     });
 
     // Determine log type badge
@@ -466,7 +520,7 @@ function showLogDetails(logData) {
                     <span class="text-sm">${formattedDate}</span>
                 </div>
             </div>
-            
+
 
             <!-- Properties/Additional Data -->
             ${logData.properties ? `
@@ -480,7 +534,7 @@ function showLogDetails(logData) {
             </div>` : ''}
         </div>
     `;
-    
+
 
     modal.showModal();
 }
@@ -511,6 +565,36 @@ function toggleAutoRefresh() {
         clearInterval(refreshInterval);
         showInfoToast('Auto-refresh disabled');
     }
+}
+
+// Recover Record Function (Static for now)
+function recoverRecord(subjectId, subjectType) {
+    const resourceType = subjectType ? subjectType.split('\\').pop() : 'Record';
+
+    showInfoToast(`Recovery feature for ${resourceType} #${subjectId} - Coming Soon!`);
+
+    // Future implementation will go here:
+    // - Confirm recovery with modal
+    // - Send AJAX request to recovery endpoint
+    // - Show success/error toast
+    // - Reload table
+
+    console.log('Recover record:', {
+        id: subjectId,
+        type: subjectType
+    });
+}
+
+// Export Log Function (Static for now)
+function exportLog(logId) {
+    showInfoToast(`Export log #${logId} - Coming Soon!`);
+
+    // Future implementation will go here:
+    // - Format log data
+    // - Generate downloadable file (CSV/JSON)
+    // - Trigger download
+
+    console.log('Export log:', logId);
 }
 </script>
 @endpush

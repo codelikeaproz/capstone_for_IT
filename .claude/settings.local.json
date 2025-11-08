@@ -3,7 +3,21 @@
     "allow": [
       "Bash(php artisan:*)",
       "Bash(dir:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(move /Y \"resources\\views\\Incident\\edit.blade.php\" \"resources\\views\\Incident\\edit.blade.php.old\")",
+      "Bash(move:*)",
+      "Bash(cmd /c \"move /Y resources\\views\\Incident\\edit.blade.php resources\\views\\Incident\\edit.blade.php.old && move /Y resources\\views\\Incident\\edit_new.blade.php resources\\views\\Incident\\edit.blade.php\")",
+      "Bash(php:*)",
+      "Bash(del test_equipment.php)",
+      "mcp__ide__getDiagnostics",
+      "Bash(findstr:*)",
+      "Bash(git checkout:*)",
+      "Bash(CODEBASE_OVERVIEW.md)",
+      "Bash(nul)",
+      "Bash(routes_output.json)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

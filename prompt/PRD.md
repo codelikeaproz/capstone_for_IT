@@ -5,6 +5,8 @@
 
 BukidnonAlert is a centralized web-based incident reporting and vehicle utilization management system designed specifically for the Municipal Disaster Risk Reduction and Management Office (MDRRMO) of Bukidnon Province. The system serves as a unified platform for emergency response coordination, incident management, and resource optimization across multiple municipalities.
 
+This Incident is recording POST Inccident, meaning after the accident or during
+
 ## Project Overview
 
 ### Application Name
@@ -91,29 +93,122 @@ A comprehensive emergency management platform that centralizes incident reportin
 
 ### 2. Vehicle Utilization Management
 
+#### Monthly Equipment Utilization and Consumption Report
+The vehicle management system is integrated within the Monthly Equipment Utilization and Consumption Report, tracking real-time vehicle usage and end-user/victim transport status.
+
 #### Fleet Overview
 - **Real-time Status Tracking**: Available, In Use, Maintenance, Out of Service
-- **Vehicle Classification**: Ambulance, Fire Truck, Rescue Vehicle, Patrol Car
-- **Registration Management**: License plates, vehicle numbers
+- **Vehicle Classification**:
+  - Ambulance
+  - Fire Truck
+  - Rescue Vehicle
+  - Patrol Car
+  - TRAVIZ
+  - Pick-up
+  - Other emergency vehicles
+- **Registration Management**: License plates, vehicle numbers, equipment descriptions
+
+#### Vehicle Utilization Records
+Each vehicle maintains detailed utilization records with the following information:
+
+**Vehicle Information**:
+- Equipment Description (e.g., TRAVIZ, AMBULANCE, PICK-UP)
+- Plate Number (e.g., F2Z-116 SALAGANTIN/PEREZ, F4E-989 CAÑAR/UCANG)
+
+**Service Details**:
+- **Date of Service**: Track daily vehicle usage
+- **End-User/Victim**: Link to victims/patients using the vehicle
+- **Origin**: Starting location (ADDRESS/OFFICE/ORIGIN)
+  - Examples: SANITARIUM, CROSSING NFA, SAN MIGUEL, DAVAO AIRPORT, SIMBULAN HOSP, CAMP 1, BPH, NORTH POB, SAN ANDRES, BASECAMP, SOUTH POB, DAGUMBAAN, PANADTALAN, ANAHAWON, COLAMBUGON
+- **Destination**: Ending location
+  - Examples: KUYA, BPH, MARAMAG, DAGUMBAAN, PAHILAN HOSPITAL, BPH MAR
+
+**Health Services Categories**:
+- Vehicular Accident
+- Maternity
+- Stabbing/Shooting
+- Other Health Services:
+  - Transport to Hospital
+  - Transport Mentally Ill
+  - Transport Cadaver
+  - Discharge Transport
+  - Hospital Transfer/Referral
+
+**Non-Health Services Categories**:
+- Equipment/Materials/Personnel Transport
+- Other Non-Health Services
+
+**Trip Documentation**:
+- Trip Ticket Number
+- Fuel Consumption tracking
+- Driver Name (e.g., PACAL, PEREZ, KENT, CANAR, UCANG)
+
+#### End-User/Victim Status Management
+When updating victim/end-user records, staff can:
+
+**Status Update Options**:
+1. **Discharge**: Mark patient as discharged
+   - Select vehicle used for transport
+   - Record discharge destination
+   - Update victim status to "Discharged"
+
+2. **Transport to Hospital**: Initial hospital transport
+   - Select vehicle type (Ambulance, TRAVIZ, etc.)
+   - Record origin and destination
+   - Track service type (Maternity, Vehicular Accident, etc.)
+   - Assign driver
+
+3. **Hospital Transfer/Referral**: Transfer to another hospital
+   - Select vehicle for transfer
+   - Record referring hospital (origin)
+   - Record receiving hospital (destination)
+   - Update victim status to "Referred"
+   - Track transfer reason and service type
+
+4. **Ongoing Care**: Patient remains in hospital
+   - Status remains "In Treatment"
+   - Can be updated later when discharged or transferred
+
+**Vehicle Selection Integration**:
+- When updating victim status, system displays available vehicles
+- Vehicle utilization record is automatically created upon selection
+- Real-time vehicle availability is updated
+- Monthly report automatically populates with utilization data
 
 #### Operational Metrics
 - **Fuel Management**:
   - Current fuel levels (percentage display)
   - Fuel capacity tracking
-  - Consumption trend analysis
+  - Consumption per trip/service
+  - Monthly consumption analysis
+  - Trip ticket correlation
 - **Mileage Tracking**:
-  - Odometer readings
-  - Usage patterns
+  - Odometer readings per trip
+  - Usage patterns by service type
   - Distance-based maintenance alerts
+  - Route efficiency analysis
 - **Personnel Assignment**:
-  - Driver assignment tracking
+  - Driver assignment tracking per trip
   - Staff allocation management
+  - Driver availability status
+  - Service load distribution
+
+#### Utilization Reporting
+- **Monthly Reports**: Auto-generated equipment utilization summaries
+- **Service Statistics**:
+  - Total trips per vehicle
+  - Service type breakdown
+  - Health vs Non-Health services ratio
+  - Most utilized vehicles
+- **End-User/Victim Transport History**: Complete transport records linked to incidents
+- **Fuel Efficiency Analysis**: Consumption patterns by vehicle and service type
 
 #### Maintenance System
 - **Scheduled Maintenance**: Preventive maintenance calendar
 - **Service History**: Complete maintenance records
 - **Alert System**: Overdue maintenance notifications
 - **Compliance Tracking**: Inspection and certification management
+- **Usage-Based Maintenance**: Maintenance scheduling based on trip frequency and mileage
 
 ### 3. Request Management System
 
@@ -124,6 +219,10 @@ A comprehensive emergency management platform that centralizes incident reportin
   - Medical emergency reports
   - Fire incident reports
   - General emergency reports
+
+
+
+
 
 #### Workflow Management
 - **Status Tracking**: Pending → Processing → Approved/Rejected → Completed
@@ -340,11 +439,25 @@ A comprehensive emergency management platform that centralizes incident reportin
 
 ### Remaining Development
 - 🚧 **Incident Management**: Complete CRUD operations
-- 🚧 **User Management**: Complete User Management CRUD operations , asisgn user roles /  Admun roles / Staff roles
-- 🚧 **Victim Management**: Complete CRUD operations / update 
+- 🚧 **User Management**: Complete User Management CRUD operations, assign user roles / Admin roles / Staff roles
+- 🚧 **Victim or End_Users Management**:
+  - Complete CRUD operations / update
+  - Implement vehicle selection for status updates (Discharge, Transport, Transfer)
+  - Link victim records to vehicle utilization reports
+- 🚧 **Vehicle Management Enhancement**:
+  - Monthly Equipment Utilization and Consumption Report interface
+  - Vehicle selection integration in victim status updates
+  - Automated utilization record creation
+  - Trip documentation with fuel consumption tracking
+  - Driver assignment per trip/service
+  - Service type categorization (Health/Non-Health)
 - 🚧 **Staff View role**: Complete CRUD operations / Views
 - 🚧 **Mobile Interface**: Responder mobile optimization
-- 🚧 **Advanced Analytics**: Complete reporting system
+- 🚧 **Advanced Analytics**:
+  - Complete reporting system
+  - Vehicle utilization statistics
+  - Fuel consumption analysis
+  - Service type breakdowns
 - 🚧 **Testing & QA**: Comprehensive system testing
 - 🚧 **Documentation**: User manuals and admin guides
 
@@ -369,3 +482,27 @@ The current implementation provides a solid foundation with 85% of core function
 **Last Updated**: January 2025  
 **Author**: System Analysis  
 **Status**: Final Draft - Ready for Implementation
+
+
+
+
+Vehicle Records Schema
+
+Vehicle Information
+EQUIPMENT DESCRIPTION: (e.g., TRAVIZ, AMBULANCE, PICK-UP)
+PLATE NUMBER: (e.g., TRAYA/ARICAYOS, F2Z - 116 SALAGANTIN/PEREZ, F4E - 989 CAÑAR/UCANG)
+Utilization Details
+DATE: Date of service (e.g., 7, 9, 10, 11, 12, 14, 15, 17, 19, 20, 21)
+END-USER: Name of the person or entity using the vehicle (e.g., DOLORES MARIBAO, JEREMY HANDAG, ROGELIO A. DAYAP, ANECITA PAGMANOJA, ROLANDO AMIGO, SUSAN L. UCAB, BENITO BALABA, GILBERT NGOHO, JERRY CAMBEZA, REGINE DELA CRUZ, ASHLEY DACUT, GABRIEL PETER DEOGANES AND COMP, RAQUIEM ADAR, ROEL PEROCHO, KURT RUSSEL OBEDENCIO, CRISTITOTO RABACA, LENIE TANDOG, MARK IAN SABRORO, LEONIZA VILLAHERMOSA AND COMP, MICHAELA ESTORIL, ROUFALEN AMERIL, EUSTIQUIO AMAD)
+ADDRESS/OFFICE/ORIGIN: Starting location of the service (e.g., SANITARIUM, CROSSING NFA, SAN MIGUEL, DAVAO AIRPORT, SIMBULAN HOSP, CAMP 1, BPH, NORTH POB, SAN ANDRES, BASECAMP, SOUTH POB, DAGUMBAAN, PANADTALAN, ANAHAWON, COLAMBUGON)
+DESTINATION: Ending location of the service (e.g., KUYA, BPH, MARAMAG, DAGUMBAAN, PAHILAN HOS, BPH MAR)
+HEALTH SERVICES:
+VEHICULAR ACCIDENT
+MATERNITY
+STABBING / SHOOTING
+OTHER HEALTH SERVICES (e.g., TRANSPORT TO HOSPITAL, TRANSPORT MENTALLY ILL, TRANSPORT CADAVER)
+NON-HEALTH SERVICES:
+EQUIPMENT/MATERIALS /PERSONNEL TRANSPORT
+OTHER NON-HEALTH SERVICES
+TRIP TICKET CN/ FUEL CONSUMPTION: Details related to trip tickets or fuel usage.
+NAME OF DRIVER: Driver responsible for the service (e.g., PACAL, PEREZ, KENT, CANAR, UCANG)

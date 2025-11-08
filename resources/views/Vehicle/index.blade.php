@@ -13,7 +13,7 @@
             </h1>
             <p class="text-gray-600 mt-1">Monitor and manage emergency response vehicles</p>
         </div>
-        
+
         <div class="flex space-x-3">
             <a href="{{ route('vehicles.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus mr-2"></i>
@@ -96,19 +96,19 @@
                 <i class="fas fa-filter text-blue-500"></i>
                 Filters
             </h2>
-            
+
             <form method="GET" action="{{ route('vehicles.index') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="form-control">
                     <select name="municipality" class="select select-bordered select-sm">
                         <option value="">All Municipalities</option>
-                        <option value="Valencia City" {{ request('municipality') == 'Valencia City' ? 'selected' : '' }}>Valencia City</option>
-                        <option value="Malaybalay City" {{ request('municipality') == 'Malaybalay City' ? 'selected' : '' }}>Malaybalay City</option>
-                        <option value="Don Carlos" {{ request('municipality') == 'Don Carlos' ? 'selected' : '' }}>Don Carlos</option>
-                        <option value="Quezon" {{ request('municipality') == 'Quezon' ? 'selected' : '' }}>Quezon</option>
-                        <option value="Manolo Fortich" {{ request('municipality') == 'Manolo Fortich' ? 'selected' : '' }}>Manolo Fortich</option>
+                        @foreach(config('locations.municipalities') as $municipality => $barangays)
+                            <option value="{{ $municipality }}" {{ request('municipality') == $municipality ? 'selected' : '' }}>
+                                {{ $municipality }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
-                
+
                 <div class="form-control">
                     <select name="vehicle_type" class="select select-bordered select-sm">
                         <option value="">All Types</option>
@@ -119,7 +119,7 @@
                         <option value="support_vehicle" {{ request('vehicle_type') == 'support_vehicle' ? 'selected' : '' }}>🚚 Support Vehicle</option>
                     </select>
                 </div>
-                
+
                 <div class="form-control">
                     <select name="status" class="select select-bordered select-sm">
                         <option value="">All Statuses</option>
@@ -129,7 +129,7 @@
                         <option value="out_of_service" {{ request('status') == 'out_of_service' ? 'selected' : '' }}>Out of Service</option>
                     </select>
                 </div>
-                
+
                 <div class="flex space-x-2">
                     <button type="submit" class="btn btn-primary btn-sm flex-1">
                         <i class="fas fa-search mr-1"></i> Filter
@@ -185,7 +185,7 @@
                                 <span>{{ $vehicle->fuel_level_percentage }}%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-{{ $vehicle->fuel_level_percentage > 25 ? 'green' : 'red' }}-500 h-2 rounded-full transition-all duration-300" 
+                                <div class="bg-{{ $vehicle->fuel_level_percentage > 25 ? 'green' : 'red' }}-500 h-2 rounded-full transition-all duration-300"
                                      style="width: {{ $vehicle->fuel_level_percentage }}%"></div>
                             </div>
                         </div>
@@ -336,14 +336,14 @@
                         <option value="out_of_service">Mark Out of Service</option>
                     </select>
                 </div>
-                
+
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-semibold">Next Maintenance Due</span>
                     </label>
                     <input type="date" name="next_maintenance_due" class="input input-bordered">
                 </div>
-                
+
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-semibold">Maintenance Notes</span>
@@ -388,11 +388,11 @@ function refreshData() {
 function showAssignModal(vehicleId) {
     const form = document.getElementById('assignForm');
     form.action = `/vehicles/${vehicleId}/assign`;
-    
+
     // Check if there are available incidents
     const incidentSelect = form.querySelector('select[name="incident_id"]');
     const submitBtn = form.querySelector('button[type="submit"]');
-    
+
     if (incidentSelect.options.length <= 1) { // Only has default option
         submitBtn.disabled = true;
         submitBtn.textContent = 'No Incidents Available';
@@ -400,17 +400,17 @@ function showAssignModal(vehicleId) {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Assign Vehicle';
     }
-    
+
     assignModal.showModal();
 }
 
 function showMaintenanceModal(vehicleId) {
     const form = document.getElementById('maintenanceForm');
     form.action = `/vehicles/${vehicleId}/maintenance`;
-    
+
     // Reset form fields
     form.reset();
-    
+
     maintenanceModal.showModal();
 }
 
@@ -425,7 +425,7 @@ function showDeleteModal(vehicleId) {
 // Handle form submissions with loading states
 document.addEventListener('DOMContentLoaded', function() {
     const forms = document.querySelectorAll('form');
-    
+
     forms.forEach(form => {
         form.addEventListener('submit', function(e) {
             const submitBtn = form.querySelector('button[type="submit"]');

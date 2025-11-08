@@ -44,9 +44,11 @@ Route::get('/email/verify/{token}', [EmailVerificationController::class, 'verify
 Route::get('/email/verification/resend', [EmailVerificationController::class, 'showResendForm'])->name('email.verification.resend.form');
 Route::post('/email/verification/resend', [EmailVerificationController::class, 'resendVerification'])->name('email.verification.resend');
 
-// Public request status checking
-Route::get('/status', [RequestController::class, 'checkStatus'])->name('requests.status-check');
-Route::get('/status/{requestNumber}', [RequestController::class, 'checkStatus'])->name('requests.status');
+// Public request routes (no authentication required)
+Route::get('/requests/create', [RequestController::class, 'create'])->name('requests.create');
+Route::post('/requests', [RequestController::class, 'store'])->name('requests.store');
+Route::get('/requests/status', [RequestController::class, 'checkStatus'])->name('requests.status-check');
+Route::get('/requests/status/{requestNumber}', [RequestController::class, 'checkStatus'])->name('requests.status');
 
 // ====================
 // PROTECTED ROUTES (Authentication Required)
@@ -59,9 +61,9 @@ Route::middleware('auth')->group(function () {
 
     // Dashboard routes (Role-based)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/staff-dashboard', [DashboardController::class, 'staffDashboard'])->name('staff.dashboard');
-    Route::get('/responder-dashboard', [DashboardController::class, 'responderDashboard'])->name('responder.dashboard');
-    Route::get('/admin-dashboard', [DashboardController::class, 'adminDashboard'])->name('admin.dashboard');
+    Route::get('/staff-dashboard', [DashboardController::class, 'staffDashboard'])->name('staff.dashboard')->middleware('staff');
+    Route::get('/responder-dashboard', [DashboardController::class, 'responderDashboard'])->name('responder.dashboard')->middleware('role:responder,admin');
+    Route::get('/admin-dashboard', [DashboardController::class, 'adminDashboard'])->name('admin.dashboard')->middleware('admin');
 
     // Dashboard API routes
     Route::prefix('api/dashboard')->group(function () {
@@ -70,65 +72,72 @@ Route::middleware('auth')->group(function () {
     });
 
     // ====================
-    // INCIDENT MANAGEMENT
+    // INCIDENT MANAGEMENT (Staff & Admin)
     // ====================
-    Route::get('/incidents', [IncidentController::class, 'index'])->name('incidents.index');
-    Route::get('/incidents/create', [IncidentController::class, 'create'])->name('incidents.create');
-    Route::post('/incidents', [IncidentController::class, 'store'])->name('incidents.store');
-    Route::get('/incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');
-    Route::get('/incidents/{incident}/edit', [IncidentController::class, 'edit'])->name('incidents.edit');
-    Route::put('/incidents/{incident}', [IncidentController::class, 'update'])->name('incidents.update');
-    // Allow accessing soft-deleted incidents for proper error handling
-    Route::delete('/incidents/{incident}', [IncidentController::class, 'destroy'])
-        ->name('incidents.destroy')
-        ->withTrashed();
+    Route::middleware('staff')->group(function () {
+        Route::get('/incidents', [IncidentController::class, 'index'])->name('incidents.index');
+        Route::get('/incidents/create', [IncidentController::class, 'create'])->name('incidents.create');
+        Route::post('/incidents', [IncidentController::class, 'store'])->name('incidents.store');
+        Route::get('/incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');
+        Route::get('/incidents/{incident}/edit', [IncidentController::class, 'edit'])->name('incidents.edit');
+        Route::put('/incidents/{incident}', [IncidentController::class, 'update'])->name('incidents.update');
+        // Allow accessing soft-deleted incidents for proper error handling
+        Route::delete('/incidents/{incident}', [IncidentController::class, 'destroy'])
+            ->name('incidents.destroy')
+            ->withTrashed();
+    });
 
     // Location API routes
     Route::get('/api/municipalities', [IncidentController::class, 'getMunicipalities'])->name('api.municipalities');
     Route::get('/api/barangays', [IncidentController::class, 'getBarangays'])->name('api.barangays');
 
     // ====================
-    // VEHICLE MANAGEMENT
+    // VEHICLE MANAGEMENT (Staff & Admin)
     // ====================
-    Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
-    Route::get('/vehicles/create', [VehicleController::class, 'create'])->name('vehicles.create');
-    Route::post('/vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
-    Route::get('/vehicles/{vehicle}', [VehicleController::class, 'show'])->name('vehicles.show');
-    Route::get('/vehicles/{vehicle}/edit', [VehicleController::class, 'edit'])->name('vehicles.edit');
-    Route::put('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
-    Route::delete('/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
+    Route::middleware('staff')->group(function () {
+        Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
+        Route::get('/vehicles/create', [VehicleController::class, 'create'])->name('vehicles.create');
+        Route::post('/vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
+        Route::get('/vehicles/{vehicle}', [VehicleController::class, 'show'])->name('vehicles.show');
+        Route::get('/vehicles/{vehicle}/edit', [VehicleController::class, 'edit'])->name('vehicles.edit');
+        Route::put('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
+        Route::delete('/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy')->middleware('admin');
 
-    // Vehicle assignment and management
-    Route::post('/vehicles/{vehicle}/assign', [VehicleController::class, 'assignToIncident'])->name('vehicles.assign');
-    Route::post('/vehicles/{vehicle}/release', [VehicleController::class, 'releaseFromIncident'])->name('vehicles.release');
-    Route::post('/vehicles/{vehicle}/maintenance', [VehicleController::class, 'updateMaintenance'])->name('vehicles.maintenance');
-
-    // ====================
-    // VICTIM MANAGEMENT
-    // ====================
-    Route::get('/victims', [VictimController::class, 'index'])->name('victims.index');
-    Route::get('/victims/create', [VictimController::class, 'create'])->name('victims.create');
-    Route::post('/victims', [VictimController::class, 'store'])->name('victims.store');
-    Route::get('/victims/{victim}', [VictimController::class, 'show'])->name('victims.show');
-    Route::get('/victims/{victim}/edit', [VictimController::class, 'edit'])->name('victims.edit');
-    Route::put('/victims/{victim}', [VictimController::class, 'update'])->name('victims.update');
-    Route::delete('/victims/{victim}', [VictimController::class, 'destroy'])->name('victims.destroy');
+        // Vehicle assignment and management
+        Route::post('/vehicles/{vehicle}/assign', [VehicleController::class, 'assignToIncident'])->name('vehicles.assign');
+        Route::post('/vehicles/{vehicle}/release', [VehicleController::class, 'releaseFromIncident'])->name('vehicles.release');
+        Route::post('/vehicles/{vehicle}/maintenance', [VehicleController::class, 'updateMaintenance'])->name('vehicles.maintenance');
+    });
 
     // ====================
-    // REQUEST MANAGEMENT
-    // ====================x
+    // VICTIM MANAGEMENT (Staff & Admin)
+    // ====================
+    Route::middleware('staff')->group(function () {
+        Route::get('/victims', [VictimController::class, 'index'])->name('victims.index');
+        Route::get('/victims/create', [VictimController::class, 'create'])->name('victims.create');
+        Route::post('/victims', [VictimController::class, 'store'])->name('victims.store');
+        Route::get('/victims/{victim}', [VictimController::class, 'show'])->name('victims.show');
+        Route::get('/victims/{victim}/edit', [VictimController::class, 'edit'])->name('victims.edit');
+        Route::put('/victims/{victim}', [VictimController::class, 'update'])->name('victims.update');
+        Route::delete('/victims/{victim}', [VictimController::class, 'destroy'])->name('victims.destroy');
+    });
+
+    // ====================
+    // REQUEST MANAGEMENT (Staff & Admin)
+    // ====================
     Route::get('/requests', [RequestController::class, 'index'])->name('requests.index');
-    Route::get('/requests/create', [RequestController::class, 'create'])->name('requests.create');
-    Route::post('/requests', [RequestController::class, 'store'])->name('requests.store');
     Route::get('/requests/{request}', [RequestController::class, 'show'])->name('requests.show');
     Route::get('/requests/{request}/edit', [RequestController::class, 'edit'])->name('requests.edit');
     Route::put('/requests/{request}', [RequestController::class, 'update'])->name('requests.update');
-    Route::delete('/requests/{request}', [RequestController::class, 'destroy'])->name('requests.destroy');
+    Route::delete('/requests/{request}', [RequestController::class, 'destroy'])->name('requests.destroy')->middleware('admin');
 
-    // Request management
+    // Request management actions
     Route::post('/requests/{request}/assign', [RequestController::class, 'assign'])->name('requests.assign');
     Route::post('/requests/bulk-approve', [RequestController::class, 'bulkApprove'])->name('requests.bulk-approve');
     Route::post('/requests/bulk-reject', [RequestController::class, 'bulkReject'])->name('requests.bulk-reject');
+
+    // API endpoint for victim search
+    Route::get('/api/requests/search-incidents', [RequestController::class, 'searchIncidentsByVictim'])->name('api.requests.search-incidents');
 
     // ====================
     // ANALYTICS & REPORTING
@@ -147,15 +156,17 @@ Route::middleware('auth')->group(function () {
     // ====================
     // USER MANAGEMENT (Admin Only)
     // ====================
-    Route::resource('users', UserController::class);
+    Route::middleware('admin')->group(function () {
+        Route::resource('users', UserController::class);
 
-    // User management actions
-    Route::post('/users/{user}/assign-role', [UserController::class, 'assignRole'])->name('users.assign-role');
-    Route::post('/users/{user}/assign-municipality', [UserController::class, 'assignMunicipality'])->name('users.assign-municipality');
-    Route::post('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
-    Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
-    Route::post('/users/{user}/unlock', [UserController::class, 'unlockAccount'])->name('users.unlock');
-    Route::post('/users/{user}/verify-email', [UserController::class, 'verifyEmail'])->name('users.verify-email');
+        // User management actions
+        Route::post('/users/{user}/assign-role', [UserController::class, 'assignRole'])->name('users.assign-role');
+        Route::post('/users/{user}/assign-municipality', [UserController::class, 'assignMunicipality'])->name('users.assign-municipality');
+        Route::post('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
+        Route::post('/users/{user}/unlock', [UserController::class, 'unlockAccount'])->name('users.unlock');
+        Route::post('/users/{user}/verify-email', [UserController::class, 'verifyEmail'])->name('users.verify-email');
+    });
 
     // ====================
     // MOBILE ROUTES (Responder Interface)

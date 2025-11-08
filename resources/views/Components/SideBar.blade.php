@@ -177,6 +177,26 @@
                 </li>
             </a>
 
+            <!-- Request Management -->
+            <a href="{{ route('requests.index') }}" class="{{ request()->routeIs('requests.*') ? 'bg-orange-700' : '' }}">
+                <li class="px-4 py-3 hover:bg-orange-700 rounded-md mx-2 flex items-center">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span class="nav-text ml-3 transition-opacity duration-300">Requests</span>
+                    @auth
+                        @php
+                            $pendingRequests = \App\Models\Request::where('status', 'pending')
+                                ->when(auth()->user()->role !== 'admin', function($query) {
+                                    return $query->where('municipality', auth()->user()->municipality);
+                                })
+                                ->count();
+                        @endphp
+                        @if($pendingRequests > 0)
+                            <span class="nav-text ml-auto bg-warning text-white text-xs rounded-full px-2 py-1 transition-opacity duration-300">{{ $pendingRequests }}</span>
+                        @endif
+                    @endauth
+                </li>
+            </a>
+
             <!-- Vehicles - Staff and Admin only -->
             @auth
                 @if(in_array(auth()->user()->role, ['admin', 'staff', 'responder']))

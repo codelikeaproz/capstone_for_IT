@@ -52,6 +52,9 @@
         </div>
 
         <!-- Ambulance Requested -->
+        {{-- this type is tag the ambulance  --}}
+        {{-- if the ambulance is requested, the ambulance will be tagged to the incident which ambulance is requested --}}
+     
         <div class="form-control">
             <label class="label cursor-pointer justify-start gap-3 bg-base-200 p-4 rounded-box">
                 <input
@@ -67,7 +70,7 @@
                 </div>
             </label>
         </div>
-
+        
         <!-- Patient Symptoms -->
         <div class="form-control md:col-span-2">
             <label class="label">
@@ -87,7 +90,6 @@
             @enderror
         </div>
     </div>
-
     <!-- Alert Box for Adding Victims -->
     <div class="alert alert-info mt-6">
         <i class="fas fa-info-circle"></i>

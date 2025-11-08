@@ -400,6 +400,7 @@
         </div>
     </div>
 </div>
+@endsection
 
 {{-- Delete Confirmation Modal --}}
 @if(Auth::user()->role === 'admin')
@@ -437,68 +438,8 @@
 </dialog>
 @endif
 
-{{-- Toast Container - MUST be placed AFTER modal for proper z-index stacking --}}
-<div id="toast-container" class="toast toast-top toast-end" style="z-index: 99999 !important;"></div>
-
 @push('scripts')
 <script>
-// Toast notification function - IMPROVED with better visibility and timing
-function showToast(message, type = 'success') {
-    const toastContainer = document.getElementById('toast-container');
-
-    if (!toastContainer) {
-        console.error('Toast container not found!');
-        return;
-    }
-
-    // Create toast element
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type} shadow-lg mb-2`;
-    toast.style.minWidth = '300px';
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100%)';
-    toast.style.transition = 'all 0.3s ease-in-out';
-
-    // Icon based on type
-    let icon = 'fa-check-circle';
-    if (type === 'error') icon = 'fa-exclamation-circle';
-    if (type === 'warning') icon = 'fa-exclamation-triangle';
-    if (type === 'info') icon = 'fa-info-circle';
-
-    toast.innerHTML = `
-        <div class="flex items-center gap-3">
-            <i class="fas ${icon} text-xl" aria-hidden="true"></i>
-            <span class="font-medium">${message}</span>
-        </div>
-    `;
-
-    // Add to container
-    toastContainer.appendChild(toast);
-
-    // Force browser reflow before animation
-    toast.offsetHeight;
-
-    // Slide in animation
-    requestAnimationFrame(() => {
-        toast.style.opacity = '1';
-        toast.style.transform = 'translateX(0)';
-    });
-
-    // Auto-remove after 6 seconds (increased from 5)
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            if (toast.parentNode === toastContainer) {
-                toastContainer.removeChild(toast);
-            }
-        }, 300);
-    }, 6000);
-
-    // Log for debugging
-    console.log(`Toast shown: ${message} (${type})`);
-}
-
 // Refresh data
 function refreshData() {
     window.location.reload();
@@ -579,7 +520,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Show toast AFTER modal starts closing
                     setTimeout(() => {
-                        showToast(data.message || 'Incident deleted successfully!', 'success');
+                        showSuccessToast(data.message || 'Incident deleted successfully!');
                     }, 200);
 
                     // Redirect after toast is visible (increased to 3 seconds for emergency responders)
@@ -595,7 +536,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Show error toast after modal closes
                     setTimeout(() => {
-                        showToast(data.message || 'Failed to delete incident.', 'error');
+                        showErrorToast(data.message || 'Failed to delete incident.');
                     }, 200);
                 }
             })
@@ -608,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Show error toast after modal closes
                 setTimeout(() => {
-                    showToast(error.message || 'An error occurred while deleting the incident.', 'error');
+                    showErrorToast(error.message || 'An error occurred while deleting the incident.');
                 }, 200);
                 console.error('Delete error:', error);
             });
@@ -626,4 +567,3 @@ setTimeout(function() {
 }, 30000);
 </script>
 @endpush
-@endsection

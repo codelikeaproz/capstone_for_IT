@@ -9,11 +9,12 @@
 
     <!-- Leaflet CSS for maps -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="{{ asset('styles/app_layout/app.css') }}">
 
     <!-- FontAwesome Icons - Multiple sources for reliability -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+
 
     @stack('styles')
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -155,7 +156,10 @@
         .menu-toggle.debug {
             background-color: yellow !important;
             color: black !important;
+
+
         }
+
     </style>
 </head>
 <body class="min-h-screen bg-base-200">
@@ -171,69 +175,16 @@
     </div>
     @include("Components.Footer")
 
-    <!-- Toast Notifications -->
-    @if(session('success'))
-        <div class="toast toast-top toast-end z-[9999]">
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle"></i>
-                <span>{{ session('success') }}</span>
-            </div>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="toast toast-top toast-end z-[9999]">
-            <div class="alert alert-error">
-                <i class="fas fa-exclamation-circle"></i>
-                <span>{{ session('error') }}</span>
-            </div>
-        </div>
-    @endif
-
-    @if(session('warning'))
-        <div class="toast toast-top toast-end z-[9999]">
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span>{{ session('warning') }}</span>
-            </div>
-        </div>
-    @endif
-
-    @if(session('info'))
-        <div class="toast toast-top toast-end z-[9999]">
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                <span>{{ session('info') }}</span>
-            </div>
-        </div>
-    @endif
-
     <!-- Leaflet JS for maps -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
     <!-- Global Toast Functions -->
     <script>
-        // Auto-hide toast notifications after 3 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                const toasts = document.querySelectorAll('.toast');
-                toasts.forEach(function(toast) {
-                    toast.style.transition = 'opacity 0.5s ease-out';
-                    toast.style.opacity = '0';
-                    setTimeout(function() {
-                        if (toast.parentNode) {
-                            toast.parentNode.removeChild(toast);
-                        }
-                    }, 500);
-                });
-            }, 3000);
-        });
-
         // Global toast notification functions
         function showSuccessToast(message) {
             const toast = document.createElement('div');
-            toast.className = 'toast toast-top toast-end z-[9999]';
+            toast.className = 'toast  toast-end z-[9999]';
             toast.innerHTML = `
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle"></i>
@@ -243,19 +194,15 @@
             document.body.appendChild(toast);
 
             setTimeout(() => {
-                toast.style.transition = 'opacity 0.5s ease-out';
-                toast.style.opacity = '0';
-                setTimeout(() => {
-                    if (document.body.contains(toast)) {
-                        document.body.removeChild(toast);
-                    }
-                }, 500);
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
             }, 3000);
         }
 
         function showInfoToast(message) {
             const toast = document.createElement('div');
-            toast.className = 'toast toast-top toast-end z-[9999]';
+            toast.className = 'toast  toast-end z-[9999]';
             toast.innerHTML = `
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
@@ -265,19 +212,17 @@
             document.body.appendChild(toast);
 
             setTimeout(() => {
-                toast.style.transition = 'opacity 0.5s ease-out';
-                toast.style.opacity = '0';
-                setTimeout(() => {
-                    if (document.body.contains(toast)) {
-                        document.body.removeChild(toast);
-                    }
-                }, 500);
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
             }, 3000);
         }
 
+
+
         function showErrorToast(message) {
             const toast = document.createElement('div');
-            toast.className = 'toast toast-top toast-end z-[9999]';
+            toast.className = 'toast  toast-end z-[9999]';
             toast.innerHTML = `
                 <div class="alert alert-error">
                     <i class="fas fa-exclamation-circle"></i>
@@ -287,13 +232,9 @@
             document.body.appendChild(toast);
 
             setTimeout(() => {
-                toast.style.transition = 'opacity 0.5s ease-out';
-                toast.style.opacity = '0';
-                setTimeout(() => {
-                    if (document.body.contains(toast)) {
-                        document.body.removeChild(toast);
-                    }
-                }, 500);
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
             }, 3000);
         }
     </script>
