@@ -3,550 +3,102 @@
 @section('title', 'Report New Incident')
 
 @section('content')
-<div class="min-h-screen bg-base-200 py-8">
+<div class="min-h-screen bg-base-200 py-8" role="main">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Page Header -->
-        <div class="mb-6">
-            <div class="flex items-center justify-between">
+        <header class="mb-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-base-content">Report New Incident</h1>
-                    <p class="mt-1 text-sm text-base-content/60">
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <i class="fas fa-exclamation-triangle text-error" aria-hidden="true"></i>
+                        <span>Report New Incident</span>
+                    </h1>
+                    <p class="mt-2 text-base text-gray-600 leading-relaxed">
                         Complete the form below to report a new incident. Fields marked with <span class="text-error font-semibold">*</span> are required.
                     </p>
                 </div>
-                <a href="{{ route('incidents.index') }}" class="btn btn-ghost btn-sm gap-2">
-                    <i class="fas fa-arrow-left"></i>
+                <a href="{{ route('incidents.index') }}"
+                   class="btn btn-outline gap-2 w-full sm:w-auto min-h-[44px]"
+                   aria-label="Back to incidents list">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
                     <span>Back</span>
                 </a>
             </div>
-        </div>
+        </header>
 
+        <!-- Validation Errors Display -->
+        @include('Components.ValidationErrors')
 
-
-        <form action="{{ route('incidents.store') }}" method="POST" enctype="multipart/form-data" class="bg-base-100 rounded-box shadow-sm p-8 space-y-10">
+        <!-- Main Form -->
+        <form action="{{ route('incidents.store') }}"
+              method="POST"
+              enctype="multipart/form-data"
+              class="bg-white rounded-lg shadow-lg p-6 md:p-8 space-y-8"
+              aria-label="New incident report form">
             @csrf
 
-              <!-- Media Upload -->
-              <div>
-                <h2 class="text-lg font-semibold text-base-content mb-1">Incident Media</h2>
-                <p class="text-sm text-base-content/60 mb-6">Upload photos and videos of the incident</p>
+            {{-- Step 1: Basic Information --}}
+            @include('Components.IncidentForm.BasicInformation')
 
-                <div class="space-y-6">
-                    <!-- Photos Upload Section -->
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Photos <span class="text-error">*</span></span>
-                            <span class="label-text-alt text-base-content/60">Max 5 photos, 2MB each</span>
-                        </label>
+            {{-- Step 2: Incident Type-Specific Fields (Conditional) --}}
+            @include('Components.IncidentForm.TrafficAccidentFields')
+            @include('Components.IncidentForm.MedicalEmergencyFields')
+            @include('Components.IncidentForm.FireIncidentFields')
+            @include('Components.IncidentForm.NaturalDisasterFields')
+            @include('Components.IncidentForm.CriminalActivityFields')
 
-                        <input
-                            type="file"
-                            name="photos[]"
-                            id="photo-input"
-                            class="file-input file-input-bordered w-full focus:outline-primary @error('photos') file-input-error @enderror"
-                            accept="image/jpeg,image/png,image/jpg,image/gif"
-                            multiple
-                            required
-                            onchange="handlePhotoUpload(this)"
-                        >
+            {{-- Step 3: Victim/Patient Management --}}
+            @include('Components.IncidentForm.VictimInlineManagement')
 
-                        <div class="label">
-                            <span class="label-text-alt text-base-content/60">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                Supported: JPG, PNG, GIF
-                            </span>
-                            <span id="photo-count-display" class="label-text-alt text-primary font-medium"></span>
-                        </div>
+            {{-- Step 4: Media Upload --}}
+            @include('Components.IncidentForm.MediaUpload')
 
-                        @error('photos')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
+            {{-- Environmental Conditions (For applicable incident types) --}}
+            <section id="environmental-conditions-section" style="display: none;" aria-labelledby="env-conditions-heading">
+                <div class="border-t border-base-300 pt-6">
+                    <h2 id="env-conditions-heading" class="text-xl font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                        <i class="fas fa-cloud-sun text-info" aria-hidden="true"></i>
+                        <span>Environmental Conditions</span>
+                    </h2>
+                    <p class="text-sm text-gray-600 mb-6">Weather conditions at the time of incident</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-control">
+                            <label for="weather-condition" class="label">
+                                <span class="label-text font-semibold text-gray-700">Weather Condition</span>
                             </label>
-                        @enderror
-                        @error('photos.*')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-
-                        <!-- Photo Preview Section -->
-                        <div id="photo-preview-container" class="mt-4 hidden">
-                            <div class="bg-base-200 rounded-lg p-4">
-                                <div class="flex items-center justify-between mb-3">
-                                    <h3 class="text-sm font-semibold text-base-content">
-                                        Uploaded Images
-                                    </h3>
-                                    <div class="flex items-center gap-3">
-                                        <span class="text-xs text-base-content/60">
-                                            <span id="photo-count">0</span>/5 photos
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onclick="clearAllPhotos()"
-                                            class="btn btn-ghost btn-xs text-error gap-1"
-                                        >
-                                            <i class="fas fa-trash"></i>
-                                            <span>Clear All</span>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div id="photo-preview-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                                    <!-- Previews will be inserted here -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Videos Upload Section -->
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Videos (Optional)</span>
-                            <span class="label-text-alt text-base-content/60">Max 2 videos, 10MB each</span>
-                        </label>
-
-                        <input
-                            type="file"
-                            name="videos[]"
-                            id="video-input"
-                            class="file-input file-input-bordered w-full focus:outline-primary @error('videos') file-input-error @enderror"
-                            accept="video/mp4,video/webm,video/quicktime"
-                            multiple
-                            onchange="handleVideoUpload(this)"
-                        >
-
-                        <div class="label">
-                            <span class="label-text-alt text-base-content/60">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                Supported: MP4, WebM, MOV
-                            </span>
-                            <span id="video-count-display" class="label-text-alt text-secondary font-medium"></span>
-                        </div>
-
-                        @error('videos')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                        @error('videos.*')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-
-                        <!-- Video Preview Section -->
-                        <div id="video-preview-container" class="mt-4 hidden">
-                            <div class="bg-base-200 rounded-lg p-4">
-                                <div class="flex items-center justify-between mb-3">
-                                    <h3 class="text-sm font-semibold text-base-content">
-                                        Uploaded Videos
-                                    </h3>
-                                    <div class="flex items-center gap-3">
-                                        <span class="text-xs text-base-content/60">
-                                            <span id="video-count">0</span>/2 videos
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onclick="clearAllVideos()"
-                                            class="btn btn-ghost btn-xs text-error gap-1"
-                                        >
-                                            <i class="fas fa-trash"></i>
-                                            <span>Clear All</span>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div id="video-preview-grid" class="space-y-3">
-                                    <!-- Video previews will be inserted here -->
-                                </div>
-                            </div>
+                            <select name="weather_condition"
+                                    id="weather-condition"
+                                    class="select select-bordered w-full focus:outline-primary min-h-[44px]">
+                                <option value="">Select weather condition</option>
+                                <option value="clear" {{ old('weather_condition') == 'clear' ? 'selected' : '' }}>Clear</option>
+                                <option value="cloudy" {{ old('weather_condition') == 'cloudy' ? 'selected' : '' }}>Cloudy</option>
+                                <option value="rainy" {{ old('weather_condition') == 'rainy' ? 'selected' : '' }}>Rainy</option>
+                                <option value="stormy" {{ old('weather_condition') == 'stormy' ? 'selected' : '' }}>Stormy</option>
+                                <option value="foggy" {{ old('weather_condition') == 'foggy' ? 'selected' : '' }}>Foggy</option>
+                            </select>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Basic Information -->
-            <div>
-                <h2 class="text-lg font-semibold text-base-content mb-1">Basic Information</h2>
-                <p class="text-sm text-base-content/60 mb-6">Essential incident details</p>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Incident Type -->
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Incident Type <span class="text-error">*</span></span>
-                        </label>
-                        <select name="incident_type" class="select select-bordered w-full focus:outline-primary @error('incident_type') select-error @enderror" required>
-                            <option value="">Select incident type</option>
-                            <option value="traffic_accident" {{ old('incident_type') == 'traffic_accident' ? 'selected' : '' }}>Traffic Accident</option>
-                            <option value="medical_emergency" {{ old('incident_type') == 'medical_emergency' ? 'selected' : '' }}>Medical Emergency</option>
-                            <option value="fire_incident" {{ old('incident_type') == 'fire_incident' ? 'selected' : '' }}>Fire Incident</option>
-                            <option value="natural_disaster" {{ old('incident_type') == 'natural_disaster' ? 'selected' : '' }}>Natural Disaster</option>
-                            <option value="criminal_activity" {{ old('incident_type') == 'criminal_activity' ? 'selected' : '' }}>Criminal Activity</option>
-                            <option value="other" {{ old('incident_type') == 'other' ? 'selected' : '' }}>Other</option>
-                        </select>
-                        @error('incident_type')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
+            </section>
 
 
-
-
-                    <!-- Severity Level -->
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Severity Level <span class="text-error">*</span></span>
-                        </label>
-                        <select name="severity_level" class="select select-bordered w-full focus:outline-primary @error('severity_level') select-error @enderror" required>
-                            <option value="">Select severity</option>
-                            <option value="low" {{ old('severity_level') == 'low' ? 'selected' : '' }}>Low</option>
-                            <option value="medium" {{ old('severity_level') == 'medium' ? 'selected' : '' }}>Medium</option>
-                            <option value="high" {{ old('severity_level') == 'high' ? 'selected' : '' }}>High</option>
-                            <option value="critical" {{ old('severity_level') == 'critical' ? 'selected' : '' }}>Critical</option>
-                        </select>
-                        @error('severity_level')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-
-                    <!-- Incident Date -->
-                    <div class="form-control md:col-span-2">
-                        <label class="label">
-                            <span class="label-text font-medium">Incident Date & Time <span class="text-error">*</span></span>
-                        </label>
-                        <input type="datetime-local" name="incident_date"
-                               class="input input-bordered w-full focus:outline-primary @error('incident_date') input-error @enderror"
-                               value="{{ old('incident_date', now()->format('Y-m-d\TH:i')) }}" required>
-                        @error('incident_date')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-                </div>
-            </div>
-
-            <!-- Location Information -->
-            <div>
-                <h2 class="text-lg font-semibold text-base-content mb-1">Location Information</h2>
-                <p class="text-sm text-base-content/60 mb-6">Incident location and coordinates</p>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Location -->
-                    <div class="form-control md:col-span-2">
-                        <label class="label">
-                            <span class="label-text font-medium">Location <span class="text-error">*</span></span>
-                        </label>
-                        <textarea name="location" rows="3"
-                                  class="textarea textarea-bordered w-full focus:outline-primary @error('location') textarea-error @enderror"
-                                  placeholder="Enter detailed location description..." required>{{ old('location') }}</textarea>
-                        @error('location')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-
-                    <!-- Municipality -->
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Municipality <span class="text-error">*</span></span>
-                        </label>
-                        <select name="municipality" id="municipality-select" class="select select-bordered w-full focus:outline-primary @error('municipality') select-error @enderror" required>
-                            <option value="">Select municipality</option>
-                            @foreach(\App\Services\LocationService::getMunicipalities() as $municipality)
-                                <option value="{{ $municipality }}" {{ old('municipality') == $municipality ? 'selected' : '' }}>
-                                    {{ $municipality }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('municipality')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-
-                    <!-- Barangay -->
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Barangay <span class="text-error">*</span></span>
-                        </label>
-                        <select name="barangay" id="barangay-select" class="select select-bordered w-full focus:outline-primary @error('barangay') select-error @enderror" required disabled>
-                            <option value="">Select municipality first</option>
-                        </select>
-                        @error('barangay')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-
-                    <!-- GPS Coordinates -->
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Latitude</span>
-                            <button type="button" class="btn btn-xs btn-primary gap-1" onclick="getLocation()">
-                                <i class="fas fa-location-arrow"></i>
-                                <span>Get Location</span>
-                            </button>
-                        </label>
-                        <input type="number" step="any" name="latitude"
-                               class="input input-bordered w-full focus:outline-primary @error('latitude') input-error @enderror"
-                               placeholder="e.g. 8.1234567" value="{{ old('latitude') }}">
-                        @error('latitude')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Longitude</span>
-                        </label>
-                        <input type="number" step="any" name="longitude"
-                               class="input input-bordered w-full focus:outline-primary @error('longitude') input-error @enderror"
-                               placeholder="e.g. 125.1234567" value="{{ old('longitude') }}">
-                        @error('longitude')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-                </div>
-            </div>
-
-            <!-- Incident Description -->
-            <div>
-                <h2 class="text-lg font-semibold text-base-content mb-1">Incident Description</h2>
-                <p class="text-sm text-base-content/60 mb-6">Detailed narrative of the incident</p>
-
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-medium">Detailed Description <span class="text-error">*</span></span>
-                        <span class="label-text-alt text-base-content/60">Be as specific as possible</span>
-                    </label>
-                    <textarea name="description" rows="5"
-                              class="textarea textarea-bordered w-full focus:outline-primary @error('description') textarea-error @enderror"
-                              placeholder="Provide a comprehensive description of the incident, including what happened, when, and any other relevant details..." required>{{ old('description') }}</textarea>
-                    @error('description')
-                        <label class="label">
-                            <span class="label-text-alt text-error">{{ $message }}</span>
-                        </label>
-                    @enderror
-                </div>
-            </div>
-
-
-
-            <!-- Environmental Conditions -->
-            <div>
-                <h2 class="text-lg font-semibold text-base-content mb-1">Environmental Conditions</h2>
-                <p class="text-sm text-base-content/60 mb-6">Weather and road conditions at the time of incident</p>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Weather Condition</span>
-                        </label>
-                        <select name="weather_condition" class="select select-bordered w-full focus:outline-primary">
-                            <option value="">Select weather condition</option>
-                            <option value="clear" {{ old('weather_condition') == 'clear' ? 'selected' : '' }}>Clear</option>
-                            <option value="cloudy" {{ old('weather_condition') == 'cloudy' ? 'selected' : '' }}>Cloudy</option>
-                            <option value="rainy" {{ old('weather_condition') == 'rainy' ? 'selected' : '' }}>Rainy</option>
-                            <option value="stormy" {{ old('weather_condition') == 'stormy' ? 'selected' : '' }}>Stormy</option>
-                            <option value="foggy" {{ old('weather_condition') == 'foggy' ? 'selected' : '' }}>Foggy</option>
-                        </select>
-                    </div>
-
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Road Condition</span>
-                        </label>
-                        <select name="road_condition" class="select select-bordered w-full focus:outline-primary">
-                            <option value="">Select road condition</option>
-                            <option value="dry" {{ old('road_condition') == 'dry' ? 'selected' : '' }}>Dry</option>
-                            <option value="wet" {{ old('road_condition') == 'wet' ? 'selected' : '' }}>Wet</option>
-                            <option value="slippery" {{ old('road_condition') == 'slippery' ? 'selected' : '' }}>Slippery</option>
-                            <option value="damaged" {{ old('road_condition') == 'damaged' ? 'selected' : '' }}>Damaged</option>
-                            <option value="under_construction" {{ old('road_condition') == 'under_construction' ? 'selected' : '' }}>Under Construction</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Casualty Information -->
-            <div>
-                <h2 class="text-lg font-semibold text-base-content mb-1">Casualty Information</h2>
-                <p class="text-sm text-base-content/60 mb-6">Number of people affected by the incident</p>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Total Casualties</span>
-                        </label>
-                        <input type="number" min="0" name="casualty_count"
-                               class="input input-bordered w-full focus:outline-primary @error('casualty_count') input-error @enderror"
-                               placeholder="0" value="{{ old('casualty_count', 0) }}">
-                        @error('casualty_count')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Injuries</span>
-                        </label>
-                        <input type="number" min="0" name="injury_count"
-                               class="input input-bordered w-full focus:outline-primary @error('injury_count') input-error @enderror"
-                               placeholder="0" value="{{ old('injury_count', 0) }}">
-                        @error('injury_count')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Fatalities</span>
-                        </label>
-                        <input type="number" min="0" name="fatality_count"
-                               class="input input-bordered w-full focus:outline-primary @error('fatality_count') input-error @enderror"
-                               placeholder="0" value="{{ old('fatality_count', 0) }}">
-                        @error('fatality_count')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-                </div>
-            </div>
-
-            <!-- Vehicle Information -->
-            <div>
-                <h2 class="text-lg font-semibold text-base-content mb-1">Vehicle Information</h2>
-                <p class="text-sm text-base-content/60 mb-6">Details about vehicles involved in the incident</p>
-
-                <div class="space-y-4">
-                    <div class="form-control">
-                        <label class="label cursor-pointer justify-start gap-3 bg-base-200 p-4 rounded-box">
-                            <input type="checkbox" name="vehicle_involved" value="1"
-                                   class="checkbox checkbox-primary"
-                                   {{ old('vehicle_involved') ? 'checked' : '' }}>
-                            <span class="label-text font-medium">Vehicle(s) involved in this incident</span>
-                        </label>
-                    </div>
-
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Vehicle Details</span>
-                            <span class="label-text-alt text-base-content/60">If applicable</span>
-                        </label>
-                        <textarea name="vehicle_details" rows="3"
-                                  class="textarea textarea-bordered w-full focus:outline-primary @error('vehicle_details') textarea-error @enderror"
-                                  placeholder="Describe involved vehicles (make, model, license plate, color, etc.)">{{ old('vehicle_details') }}</textarea>
-                        @error('vehicle_details')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-                </div>
-            </div>
-
-            <!-- Property Damage -->
-            <div>
-                <h2 class="text-lg font-semibold text-base-content mb-1">Property Damage</h2>
-                <p class="text-sm text-base-content/60 mb-6">Estimated damage and description</p>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Estimated Damage Cost</span>
-                            <span class="label-text-alt text-base-content/60">In Philippine Peso (₱)</span>
-                        </label>
-                        <input type="number" step="0.01" min="0" name="property_damage_estimate"
-                               class="input input-bordered w-full focus:outline-primary @error('property_damage_estimate') input-error @enderror"
-                               placeholder="0.00" value="{{ old('property_damage_estimate') }}">
-                        @error('property_damage_estimate')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Damage Description</span>
-                        </label>
-                        <textarea name="damage_description" rows="3"
-                                  class="textarea textarea-bordered w-full focus:outline-primary @error('damage_description') textarea-error @enderror"
-                                  placeholder="Describe the property damage in detail...">{{ old('damage_description') }}</textarea>
-                        @error('damage_description')
-                            <label class="label">
-                                <span class="label-text-alt text-error">{{ $message }}</span>
-                            </label>
-                        @enderror
-                    </div>
-                </div>
-            </div>
-
-            <!-- Response Assignment -->
-            @if(Auth::user()->role === 'admin' || Auth::user()->role === 'staff')
-            <div>
-                <h2 class="text-lg font-semibold text-base-content mb-1">Response Assignment</h2>
-                <p class="text-sm text-base-content/60 mb-6">Assign staff and resources to this incident</p>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Assign Staff Member</span>
-                            <span class="label-text-alt text-base-content/60">Optional</span>
-                        </label>
-                        <select name="assigned_staff_id" class="select select-bordered w-full focus:outline-primary">
-                            <option value="">Select staff member</option>
-                            @foreach($staff as $member)
-                                <option value="{{ $member->id }}" {{ old('assigned_staff_id') == $member->id ? 'selected' : '' }}>
-                                    {{ $member->first_name }} {{ $member->last_name }} ({{ $member->municipality }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Assign Vehicle</span>
-                            <span class="label-text-alt text-base-content/60">Optional</span>
-                        </label>
-                        <select name="assigned_vehicle_id" class="select select-bordered w-full focus:outline-primary">
-                            <option value="">Select vehicle</option>
-                            @foreach($vehicles as $vehicle)
-                                <option value="{{ $vehicle->id }}" {{ old('assigned_vehicle_id') == $vehicle->id ? 'selected' : '' }}>
-                                    {{ $vehicle->vehicle_number }} - {{ ucwords(str_replace('_', ' ', $vehicle->vehicle_type)) }} ({{ $vehicle->municipality }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-            </div>
-            @endif
+            {{-- Step 5: Assignment --}}
+            @include('Components.IncidentForm.AssignmentFields')
 
             <!-- Form Actions -->
-            <div class="border-t border-base-300 pt-6">
-                <div class="flex flex-col sm:flex-row justify-end items-center gap-3">
-                    <a href="{{ route('incidents.index') }}" class="btn btn-outline w-full sm:w-auto gap-2">
-                        <i class="fas fa-times"></i>
+            <div class="border-t border-base-300 pt-8 mt-8">
+                <div class="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3">
+                    <a href="{{ route('incidents.index') }}"
+                       class="btn btn-outline w-full sm:w-auto gap-2 min-h-[44px]"
+                       aria-label="Cancel and return to incidents list">
+                        <i class="fas fa-times" aria-hidden="true"></i>
                         <span>Cancel</span>
                     </a>
-                    <button type="submit" class="btn btn-primary w-full sm:w-auto gap-2">
-                        <i class="fas fa-paper-plane"></i>
+                    <button type="submit"
+                            class="btn btn-primary w-full sm:w-auto gap-2 min-h-[44px]"
+                            aria-label="Submit incident report">
+                        <i class="fas fa-paper-plane" aria-hidden="true"></i>
                         <span>Submit Incident Report</span>
                     </button>
                 </div>
@@ -558,13 +110,42 @@
 @push('scripts')
 <script>
 // ============================================
+// MAIN INCIDENT TYPE HANDLER
+// ============================================
+function handleIncidentTypeChange(incidentType) {
+    console.log('Incident type changed to:', incidentType);
+
+    // Hide all incident-specific sections
+    const sections = document.querySelectorAll('[data-incident-type]');
+    sections.forEach(section => {
+        section.style.display = 'none';
+    });
+
+    // Show the selected incident type section
+    if (incidentType) {
+        const selectedSection = document.querySelector(`[data-incident-type="${incidentType}"]`);
+        if (selectedSection) {
+            selectedSection.style.display = 'block';
+        }
+
+        // Show environmental conditions for applicable types
+        const envSection = document.getElementById('environmental-conditions-section');
+        if (['traffic_accident', 'natural_disaster'].includes(incidentType)) {
+            if (envSection) envSection.style.display = 'block';
+        } else {
+            if (envSection) envSection.style.display = 'none';
+        }
+    }
+}
+
+// ============================================
 // LOCATION FUNCTIONALITY
 // ============================================
 function getLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position) {
-            document.querySelector('input[name="latitude"]').value = position.coords.latitude;
-            document.querySelector('input[name="longitude"]').value = position.coords.longitude;
+            document.querySelector('input[name="latitude"]').value = position.coords.latitude.toFixed(8);
+            document.querySelector('input[name="longitude"]').value = position.coords.longitude.toFixed(8);
             showSuccessToast('Location captured successfully!');
         }, function(error) {
             showErrorToast('Failed to get location: ' + error.message);
@@ -1017,13 +598,15 @@ function clearAllVideos() {
 }
 
 // ============================================
-// DYNAMIC BARANGAY LOADING
+// DYNAMIC BARANGAY LOADING & INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
     const municipalitySelect = document.getElementById('municipality-select');
     const barangaySelect = document.getElementById('barangay-select');
+    const incidentTypeSelect = document.getElementById('incident_type');
 
     // Load barangays when municipality changes
+    if (municipalitySelect && barangaySelect) {
     municipalitySelect.addEventListener('change', function() {
         const municipality = this.value;
 
@@ -1073,7 +656,33 @@ document.addEventListener('DOMContentLoaded', function() {
     if (municipalitySelect.value) {
         municipalitySelect.dispatchEvent(new Event('change'));
     }
+    }
+
+    // Initialize incident type display on page load
+    if (incidentTypeSelect) {
+        incidentTypeSelect.addEventListener('change', function() {
+            handleIncidentTypeChange(this.value);
+        });
+
+        // Initialize on page load if there's a value
+        if (incidentTypeSelect.value) {
+            handleIncidentTypeChange(incidentTypeSelect.value);
+        }
+    }
 });
+
+// ============================================
+// TOAST NOTIFICATIONS
+// ============================================
+function showSuccessToast(message) {
+    console.log('Success:', message);
+    // You can integrate with toast library here
+}
+
+function showErrorToast(message) {
+    console.error('Error:', message);
+    alert(message);
+}
 </script>
 @endpush
 @endsection

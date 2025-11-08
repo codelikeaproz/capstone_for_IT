@@ -149,14 +149,14 @@ class Request extends Model
         $lastRequest = self::where('request_number', 'like', "REQ-{$year}-%")
                           ->orderBy('id', 'desc')
                           ->first();
-        
+
         if ($lastRequest) {
             $lastNumber = intval(substr($lastRequest->request_number, -3));
             $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
         } else {
             $newNumber = '001';
         }
-        
+
         return "REQ-{$year}-{$newNumber}";
     }
 
@@ -194,8 +194,74 @@ class Request extends Model
         $this->update([
             'status' => 'completed',
             'completed_at' => now(),
-            'processing_days' => $this->processing_started_at ? 
+            'processing_days' => $this->processing_started_at ?
                 now()->diffInDays($this->processing_started_at) : null,
         ]);
+    }
+
+    /**
+     * Create an incident from this request
+     * Maps request data to incident fields
+     *
+     * @return \App\Models\Incident
+     */
+    public function createIncidentFromRequest()
+    {
+        // Map request type to incident type
+        $incidentTypeMap = [
+            'traffic_accident_report' => 'traffic_accident',
+            'medical_emergency_report' => 'medical_emergency',
+            'fire_incident_report' => 'fire_incident',
+            'general_emergency_report' => 'other',
+            'vehicle_accident_report' => 'traffic_accident',
+            'incident_report' => 'other',
+        ];
+
+        $incidentType = $incidentTypeMap[$this->request_type] ?? 'other';
+
+        // Map urgency to severity
+        $severityMap = [
+            'critical' => 'critical',
+            'high' => 'high',
+            'medium' => 'medium',
+            'low' => 'low',
+        ];
+
+        $severityLevel = $severityMap[$this->urgency_level] ?? 'medium';
+
+        // Create incident
+        $incident = Incident::create([
+            'incident_number' => Incident::generateIncidentNumber(),
+            'incident_type' => $incidentType,
+            'severity_level' => $severityLevel,
+            'status' => 'pending',
+            'location' => $this->incident_location ?? 'Location to be determined',
+            'municipality' => $this->municipality,
+            'latitude' => null,
+            'longitude' => null,
+            'description' => "Created from citizen request {$this->request_number}\n\n" . $this->request_description,
+            'incident_date' => $this->incident_date ?? now(),
+            'reported_by' => $this->approved_by, // Staff who approved the request
+            'casualty_count' => 0,
+            'injury_count' => 0,
+            'fatality_count' => 0,
+        ]);
+
+        // Link the request to the created incident
+        $this->update([
+            'incident_case_number' => $incident->incident_number,
+        ]);
+
+        // Log the creation
+        activity()
+            ->performedOn($incident)
+            ->withProperties([
+                'source' => 'citizen_request',
+                'request_number' => $this->request_number,
+                'requester' => $this->requester_name,
+            ])
+            ->log('Incident created from citizen request');
+
+        return $incident;
     }
 }

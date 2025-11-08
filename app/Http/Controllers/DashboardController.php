@@ -330,7 +330,7 @@ class DashboardController extends Controller
     {
         return Incident::where('assigned_staff_id', $userId)
                       ->whereIn('status', ['pending', 'active'])
-                      ->latest('incident_date')
+                      ->latest('incident_date') 
                       ->take(5)
                       ->get();
     }

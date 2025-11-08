@@ -37,15 +37,41 @@ class Victim extends Model
         'insurance_provider',
         'insurance_policy_number',
         'legal_action_required',
+        // Pregnancy-related fields
+        'is_pregnant',
+        'pregnancy_trimester',
+        'pregnancy_complications',
+        'expected_delivery_date',
+        // Age-based care
+        'age_category',
+        'requires_special_care',
+        'special_care_notes',
+        // Medical vitals
+        'blood_pressure',
+        'heart_rate',
+        'temperature',
+        'respiratory_rate',
+        'consciousness_level',
+        'blood_type',
+        // Medical history
+        'known_allergies',
+        'existing_medical_conditions',
+        'current_medications',
     ];
 
     protected $casts = [
         'age' => 'integer',
         'hospital_arrival_time' => 'datetime',
+        'expected_delivery_date' => 'date',
         'helmet_used' => 'boolean',
         'seatbelt_used' => 'boolean',
         'protective_gear_used' => 'boolean',
         'legal_action_required' => 'boolean',
+        'is_pregnant' => 'boolean',
+        'requires_special_care' => 'boolean',
+        'heart_rate' => 'integer',
+        'temperature' => 'decimal:1',
+        'respiratory_rate' => 'integer',
     ];
 
     // Relationships

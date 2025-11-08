@@ -74,13 +74,12 @@ class HeatmapController extends Controller
 
         $mappedIncidents = $totalIncidents;
 
-        // Recent incidents for the table
+        // Recent incidents for the table (paginated)
         $recentIncidents = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
             ->whereNotNull('incident_date')
             ->with(['assignedStaff', 'assignedVehicle'])
             ->latest('incident_date')
-            ->take(10)
-            ->get();
+            ->paginate(10);
 
         return view('HeatMaps.Heatmaps', compact(
             'incidents',

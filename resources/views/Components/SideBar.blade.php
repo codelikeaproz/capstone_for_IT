@@ -92,30 +92,66 @@
             <!-- Users Management - Admin Only -->
             @auth
                 @if(auth()->user()->role === 'admin')
-                    <li class="px-4 py-3 hover:bg-orange-700 rounded-md mx-2 flex items-center cursor-pointer"
+                    <li class="px-4 py-3 hover:bg-orange-700 rounded-md mx-2 flex items-center cursor-pointer {{ request()->routeIs('users.*') ? 'bg-orange-700' : '' }}"
                         id="users-dropdown">
                         <i class="fas fa-users"></i>
-                        <span class="nav-text ml-3 transition-opacity duration-300">Users</span>
-                        <i class="fas fa-chevron-down nav-text ml-auto text-xs transition-transform duration-200"></i>
+                        <span class="nav-text ml-3 transition-opacity duration-300">User Management</span>
+                        <i class="fas fa-chevron-down nav-text ml-auto text-xs transition-transform duration-200" id="users-chevron"></i>
                     </li>
-                    <div class="users-submenu ml-6 mr-2 mt-1 mb-1">
+                    <div class="users-submenu ml-6 mr-2 mt-1 mb-1 {{ request()->routeIs('users.*') ? 'show' : '' }}">
                         <ul class="space-y-1">
-                            <li class="px-4 py-2 hover:bg-orange-700 rounded-md flex items-center text-sm cursor-pointer">
-                                <i class="fas fa-user-plus"></i>
-                                <span class="ml-3">Add Staff</span>
-                            </li>
-                            <li class="px-4 py-2 hover:bg-orange-700 rounded-md flex items-center text-sm cursor-pointer">
-                                <i class="fas fa-user-edit"></i>
-                                <span class="ml-3">Edit User</span>
-                            </li>
-                            <li class="px-4 py-2 hover:bg-orange-700 rounded-md flex items-center text-sm cursor-pointer">
-                                <i class="fas fa-user-cog"></i>
-                                <span class="ml-3">User Roles</span>
-                            </li>
-                            <li class="px-4 py-2 hover:bg-orange-700 rounded-md flex items-center text-sm cursor-pointer">
-                                <i class="fas fa-user-shield"></i>
-                                <span class="ml-3">Permissions</span>
-                            </li>
+                            <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.index') ? 'bg-orange-600' : '' }}">
+                                <li class="px-4 py-2 hover:bg-orange-700 rounded-md flex items-center text-sm">
+                                    <i class="fas fa-list"></i>
+                                    <span class="ml-3">All Users</span>
+                                    @php
+                                        $totalUsers = \App\Models\User::count();
+                                    @endphp
+                                    <span class="ml-auto bg-blue-500 text-white text-xs rounded-full px-2 py-0.5">{{ $totalUsers }}</span>
+                                </li>
+                            </a>
+
+                            <a href="{{ route('users.create') }}" class="{{ request()->routeIs('users.create') ? 'bg-orange-600' : '' }}">
+                                <li class="px-4 py-2 hover:bg-orange-700 rounded-md flex items-center text-sm">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span class="ml-3">Add New User</span>
+                                </li>
+                            </a>
+
+                            <a href="{{ route('users.index', ['role' => 'admin']) }}">
+                                <li class="px-4 py-2 hover:bg-orange-700 rounded-md flex items-center text-sm">
+                                    <i class="fas fa-user-shield"></i>
+                                    <span class="ml-3">Administrators</span>
+                                    @php
+                                        $adminCount = \App\Models\User::where('role', 'admin')->count();
+                                    @endphp
+                                    <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">{{ $adminCount }}</span>
+                                </li>
+                            </a>
+
+                            <a href="{{ route('users.index', ['role' => 'staff']) }}">
+                                <li class="px-4 py-2 hover:bg-orange-700 rounded-md flex items-center text-sm">
+                                    <i class="fas fa-user-tie"></i>
+                                    <span class="ml-3">Staff Members</span>
+                                    @php
+                                        $staffCount = \App\Models\User::where('role', 'staff')->count();
+                                    @endphp
+                                    <span class="ml-auto bg-blue-500 text-white text-xs rounded-full px-2 py-0.5">{{ $staffCount }}</span>
+                                </li>
+                            </a>
+
+                            <a href="{{ route('users.index', ['status' => 'inactive']) }}">
+                                <li class="px-4 py-2 hover:bg-orange-700 rounded-md flex items-center text-sm">
+                                    <i class="fas fa-user-slash"></i>
+                                    <span class="ml-3">Inactive Users</span>
+                                    @php
+                                        $inactiveCount = \App\Models\User::where('is_active', false)->count();
+                                    @endphp
+                                    @if($inactiveCount > 0)
+                                        <span class="ml-auto bg-gray-500 text-white text-xs rounded-full px-2 py-0.5">{{ $inactiveCount }}</span>
+                                    @endif
+                                </li>
+                            </a>
                         </ul>
                     </div>
                 @endif
@@ -286,15 +322,15 @@
     // Enhanced Sidebar toggle functionality with comprehensive error handling and debugging
     document.addEventListener('DOMContentLoaded', function() {
         console.log('🔧 Sidebar initialization started...');
-        
+
         const menuToggle = document.querySelector('.menu-toggle');
         const sidebar = document.querySelector('.sidebar');
         const usersDropdown = document.getElementById('users-dropdown');
-        
+
         // Find content area more reliably with multiple fallback strategies
-        const content = document.querySelector('.content-wrapper') || 
-                       document.querySelector('.content') || 
-                       document.querySelector('main') || 
+        const content = document.querySelector('.content-wrapper') ||
+                       document.querySelector('.content') ||
+                       document.querySelector('main') ||
                        document.querySelector('[class*="content"]') ||
                        document.querySelector('body > div > div:last-child') ||
                        document.querySelector('.container') ||
@@ -317,37 +353,37 @@
             testIcon.style.position = 'absolute';
             testIcon.style.left = '-9999px';
             document.body.appendChild(testIcon);
-            
+
             const computed = window.getComputedStyle(testIcon);
             const fontFamily = computed.getPropertyValue('font-family');
             document.body.removeChild(testIcon);
-            
+
             console.log('📝 FontAwesome Status:', {
                 fontFamily: fontFamily,
                 isLoaded: fontFamily.includes('Font Awesome') || fontFamily.includes('FontAwesome')
             });
-            
+
             return fontFamily.includes('Font Awesome') || fontFamily.includes('FontAwesome');
         }
 
         // Sidebar collapse/expand functionality with enhanced debugging
         if (menuToggle && sidebar) {
             console.log('✅ Sidebar elements found, attaching event listeners...');
-            
+
             menuToggle.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 const currentlyCollapsed = sidebar.classList.contains('collapsed');
                 console.log('🔄 Toggle clicked:', {
                     currentState: currentlyCollapsed ? 'collapsed' : 'expanded',
                     willBecome: currentlyCollapsed ? 'expanded' : 'collapsed'
                 });
-                
+
                 // Toggle the collapsed class
                 sidebar.classList.toggle('collapsed');
                 const newState = sidebar.classList.contains('collapsed');
-                
+
                 // Visual feedback with arrow rotation
                 const arrow = document.getElementById('collapse-arrow');
                 if (arrow) {
@@ -357,14 +393,14 @@
                         arrow.classList.remove('rotate-180');
                     }
                 }
-                
+
                 // Apply styles with forced updates and animations
                 if (newState) {
                     // Collapsing
                     sidebar.style.width = '80px';
                     sidebar.style.minWidth = '80px';
                     sidebar.style.maxWidth = '80px';
-                    
+
                     // Hide nav text elements with transition
                     document.querySelectorAll('.nav-text, .logo-text').forEach(el => {
                         el.style.opacity = '0';
@@ -372,7 +408,7 @@
                             el.style.display = 'none';
                         }, 150);
                     });
-                    
+
                     // Update menu toggle text
                     const toggleText = menuToggle.querySelector('.nav-text');
                     if (toggleText) {
@@ -383,7 +419,7 @@
                     sidebar.style.width = '256px';
                     sidebar.style.minWidth = '256px';
                     sidebar.style.maxWidth = '256px';
-                    
+
                     // Show nav text elements with transition
                     document.querySelectorAll('.nav-text, .logo-text').forEach(el => {
                         el.style.display = '';
@@ -391,7 +427,7 @@
                             el.style.opacity = '1';
                         }, 50);
                     });
-                    
+
                     // Update menu toggle text
                     const toggleText = menuToggle.querySelector('.nav-text');
                     if (toggleText) {
@@ -405,13 +441,13 @@
 
                 // Store sidebar state persistently
                 localStorage.setItem('sidebarCollapsed', newState);
-                
+
                 console.log('✅ Toggle completed:', {
                     finalState: newState ? 'collapsed' : 'expanded',
                     sidebarWidth: sidebar.style.width,
                     usingFlexbox: 'Content auto-adjusts via flexbox'
                 });
-                
+
                 // Visual feedback for successful toggle
                 menuToggle.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
                 setTimeout(() => {
@@ -423,23 +459,23 @@
             try {
                 const savedState = localStorage.getItem('sidebarCollapsed');
                 console.log('💾 Restoring saved state:', savedState);
-                
+
                 if (savedState === 'true') {
                     sidebar.classList.add('collapsed');
                     sidebar.style.width = '80px';
                     sidebar.style.minWidth = '80px';
                     sidebar.style.maxWidth = '80px';
-                    
+
                     document.querySelectorAll('.nav-text, .logo-text').forEach(el => {
                         el.style.display = 'none';
                         el.style.opacity = '0';
                     });
-                    
+
                     // No margin adjustments needed with flexbox layout
-                    
+
                     const arrow = document.getElementById('collapse-arrow');
                     if (arrow) arrow.classList.add('rotate-180');
-                    
+
                     const toggleText = menuToggle.querySelector('.nav-text');
                     if (toggleText) toggleText.textContent = 'Expand Menu';
                 }
@@ -448,16 +484,16 @@
                 localStorage.removeItem('sidebarCollapsed');
             }
         } else {
-            console.error('❌ Sidebar elements not found:', { 
-                menuToggle: !!menuToggle, 
-                sidebar: !!sidebar 
+            console.error('❌ Sidebar elements not found:', {
+                menuToggle: !!menuToggle,
+                sidebar: !!sidebar
             });
-            
+
             // Emergency fallback: try to find elements after a delay
             setTimeout(() => {
                 const delayedMenuToggle = document.querySelector('.menu-toggle');
                 const delayedSidebar = document.querySelector('.sidebar');
-                
+
                 if (delayedMenuToggle && delayedSidebar) {
                     console.log('🔄 Delayed sidebar elements found, retrying initialization...');
                     location.reload(); // Reload to reinitialize properly
@@ -469,13 +505,30 @@
         if (usersDropdown) {
             usersDropdown.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
+
                 const submenu = document.querySelector('.users-submenu');
-                const chevron = this.querySelector('.fa-chevron-down');
+                const chevron = document.getElementById('users-chevron');
+
                 if (submenu && chevron) {
                     submenu.classList.toggle('show');
                     chevron.classList.toggle('rotate-180');
+
+                    console.log('👥 Users dropdown toggled:', {
+                        isOpen: submenu.classList.contains('show')
+                    });
                 }
             });
+
+            // Auto-expand if on users page
+            if (window.location.pathname.includes('/users')) {
+                const submenu = document.querySelector('.users-submenu');
+                const chevron = document.getElementById('users-chevron');
+                if (submenu && chevron) {
+                    submenu.classList.add('show');
+                    chevron.classList.add('rotate-180');
+                }
+            }
         }
 
         // Active link highlighting
@@ -574,7 +627,7 @@
 
         window.addEventListener('resize', handleResize);
         handleResize(); // Initial check
-        
+
         // Emergency reset function for debugging (can be called from console)
         window.resetSidebar = function() {
             if (sidebar) {
@@ -588,7 +641,7 @@
                 console.log('Sidebar reset to expanded state - flexbox layout');
             }
         };
-        
+
         // Add keyboard shortcut for toggle (Ctrl + B)
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'b') {

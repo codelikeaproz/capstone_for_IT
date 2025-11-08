@@ -12,6 +12,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SystemLogsController;
 use App\Http\Controllers\HeatmapController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\UserController;
 use App\Models\Incident;
 
 // ====================
@@ -77,7 +78,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');
     Route::get('/incidents/{incident}/edit', [IncidentController::class, 'edit'])->name('incidents.edit');
     Route::put('/incidents/{incident}', [IncidentController::class, 'update'])->name('incidents.update');
-    Route::delete('/incidents/{incident}', [IncidentController::class, 'destroy'])->name('incidents.destroy');
+    // Allow accessing soft-deleted incidents for proper error handling
+    Route::delete('/incidents/{incident}', [IncidentController::class, 'destroy'])
+        ->name('incidents.destroy')
+        ->withTrashed();
 
     // Location API routes
     Route::get('/api/municipalities', [IncidentController::class, 'getMunicipalities'])->name('api.municipalities');
@@ -141,6 +145,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/system-logs', [SystemLogsController::class, 'index'])->name('system.logs');
 
     // ====================
+    // USER MANAGEMENT (Admin Only)
+    // ====================
+    Route::resource('users', UserController::class);
+
+    // User management actions
+    Route::post('/users/{user}/assign-role', [UserController::class, 'assignRole'])->name('users.assign-role');
+    Route::post('/users/{user}/assign-municipality', [UserController::class, 'assignMunicipality'])->name('users.assign-municipality');
+    Route::post('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
+    Route::post('/users/{user}/unlock', [UserController::class, 'unlockAccount'])->name('users.unlock');
+    Route::post('/users/{user}/verify-email', [UserController::class, 'verifyEmail'])->name('users.verify-email');
+
+    // ====================
     // MOBILE ROUTES (Responder Interface)
     // ====================
     Route::prefix('mobile')->group(function () {
@@ -160,4 +177,3 @@ Route::middleware('auth')->group(function () {
 Route::get('/admin', function () {
     return view('User.Admin.AdminDashboard');
 });
-

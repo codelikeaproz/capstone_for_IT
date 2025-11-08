@@ -6,8 +6,12 @@ use App\Models\Incident;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\LocationService;
+use App\Services\IncidentService;
+use App\Http\Requests\StoreIncidentRequest;
+use App\Http\Requests\UpdateIncidentRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class IncidentController extends Controller
@@ -46,94 +50,59 @@ class IncidentController extends Controller
     public function create()
     {
         $staff = User::where('role', 'staff')
-                    ->where('is_active', true)
-                    ->when(Auth::user()->role !== 'admin', function ($query) {
-                        return $query->where('municipality', Auth::user()->municipality);
-                    })
-                    ->get();
+            ->where('is_active', true)
+            ->when(Auth::user()->role !== 'admin', function ($query) {
+                return $query->where('municipality', Auth::user()->municipality);
+            })
+            ->get();
 
         $vehicles = Vehicle::where('status', 'available')
-                          ->when(Auth::user()->role !== 'admin', function ($query) {
-                              return $query->where('municipality', Auth::user()->municipality);
-                          })
-                          ->get();
+            ->when(Auth::user()->role !== 'admin', function ($query) {
+                return $query->where('municipality', Auth::user()->municipality);
+            })
+            ->get();
 
         return view('Incident.create', compact('staff', 'vehicles'));
     }
 
-    public function store(Request $request)
+    public function store(StoreIncidentRequest $request, IncidentService $incidentService)
     {
-        $validated = $request->validate([
-            'incident_type' => 'required|in:traffic_accident,medical_emergency,fire_incident,natural_disaster,criminal_activity,other',
-            'severity_level' => 'required|in:critical,high,medium,low',
-            'location' => 'required|string|max:255',
-            'municipality' => 'required|string|max:255',
-            'barangay' => 'required|string|max:255',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-            'description' => 'required|string',
-            'incident_date' => 'required|date',
-            'weather_condition' => 'nullable|in:clear,cloudy,rainy,stormy,foggy',
-            'road_condition' => 'nullable|in:dry,wet,slippery,damaged,under_construction',
-            'casualty_count' => 'integer|min:0',
-            'injury_count' => 'integer|min:0',
-            'fatality_count' => 'integer|min:0',
-            'property_damage_estimate' => 'nullable|numeric|min:0',
-            'damage_description' => 'nullable|string',
-            'vehicle_involved' => 'boolean',
-            'vehicle_details' => 'nullable|string',
-            'assigned_staff_id' => 'nullable|exists:users,id',
-            'assigned_vehicle_id' => 'nullable|exists:vehicles,id',
-            'photos' => 'required|array|max:5',
-            'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048', // Max 5 photos, 2MB each
-            'videos' => 'nullable|array|max:2',
-            'videos.*' => 'mimes:mp4,webm,mov,quicktime|max:10240', // Max 2 videos, 10MB each
-        ], [
-            'photos.required' => 'Please upload at least one photo of the incident.',
-            'photos.max' => 'You can upload a maximum of 5 photos.',
-            'photos.*.image' => 'All photo files must be valid images.',
-            'photos.*.mimes' => 'Photos must be in JPG, PNG, or GIF format.',
-            'photos.*.max' => 'Each photo must not exceed 2MB in size.',
-            'videos.max' => 'You can upload a maximum of 2 videos.',
-            'videos.*.mimes' => 'Videos must be in MP4, WebM, or MOV format.',
-            'videos.*.max' => 'Each video must not exceed 10MB in size.',
-        ]);
+        // DEBUG: Log that we reached the controller
+        Log::info('=== INCIDENT STORE REACHED ===');
+        Log::info('User authenticated: ' . (auth()->check() ? 'YES' : 'NO'));
+        Log::info('User ID: ' . (auth()->check() ? auth()->id() : 'N/A'));
+        Log::info('Request method: ' . $request->method());
+        Log::info('Request data keys: ' . implode(', ', array_keys($request->all())));
 
-        // Handle photo uploads
-        $photoPaths = [];
-        if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $photo) {
-                $path = $photo->store('incident_photos', 'public');
-                $photoPaths[] = $path;
+        try {
+            // Process license plates input (comma-separated to array)
+            $validated = $request->validated();
+
+            // DEBUG: Log successful validation
+            Log::info('Validation passed successfully');
+            Log::info('Validated data keys: ' . implode(', ', array_keys($validated)));
+
+            if (isset($validated['license_plates_input']) && !empty($validated['license_plates_input'])) {
+                $validated['license_plates'] = array_map('trim', explode(',', $validated['license_plates_input']));
+                unset($validated['license_plates_input']);
             }
+
+            // Create incident using service
+            $incident = $incidentService->createIncident($validated);
+
+            return redirect()
+                ->route('incidents.show', $incident)
+                ->with('success', "Incident {$incident->incident_number} reported successfully!");
+
+        } catch (\Exception $e) {
+            Log::error('Failed to create incident: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to create incident. Please check all fields and try again. Error: ' . $e->getMessage());
         }
-
-        // Handle video uploads
-        $videoPaths = [];
-        if ($request->hasFile('videos')) {
-            foreach ($request->file('videos') as $video) {
-                $path = $video->store('incident_videos', 'public');
-                $videoPaths[] = $path;
-            }
-        }
-
-        // Generate incident number and set default values
-        $validated['incident_number'] = Incident::generateIncidentNumber();
-        $validated['reported_by'] = Auth::id();
-        $validated['status'] = 'pending';
-        $validated['photos'] = $photoPaths;
-        $validated['videos'] = $videoPaths;
-
-        $incident = Incident::create($validated);
-
-        // Log activity
-        activity()
-            ->performedOn($incident)
-            ->withProperties(['attributes' => $validated])
-            ->log('Incident created');
-
-        return redirect()->route('incidents.show', $incident)
-                        ->with('success', 'Incident reported successfully!');
     }
 
     public function show(Incident $incident)
@@ -156,129 +125,165 @@ class IncidentController extends Controller
         }
 
         $staff = User::where('role', 'staff')
-                    ->where('is_active', true)
-                    ->when(Auth::user()->role !== 'admin', function ($query) {
-                        return $query->where('municipality', Auth::user()->municipality);
-                    })
-                    ->get();
+            ->where('is_active', true)
+            ->when(Auth::user()->role !== 'admin', function ($query) {
+                return $query->where('municipality', Auth::user()->municipality);
+            })
+            ->get();
 
         $vehicles = Vehicle::where('status', 'available')
-                          ->when(Auth::user()->role !== 'admin', function ($query) {
-                              return $query->where('municipality', Auth::user()->municipality);
-                          })
-                          ->get();
+            ->when(Auth::user()->role !== 'admin', function ($query) {
+                return $query->where('municipality', Auth::user()->municipality);
+            })
+            ->get();
 
-        return view('Incident.edit', compact('incident', 'staff', 'vehicles'));
-    }
+        // Get municipalities from LocationService
+        $municipalities = \App\Services\LocationService::getMunicipalities();
 
-    public function update(Request $request, Incident $incident)
-    {
-        // Check access permissions
-        if (Auth::user()->role !== 'admin' && Auth::user()->municipality !== $incident->municipality) {
-            abort(403, 'You do not have permission to update this incident.');
+        // Get barangays for the incident's current municipality
+        $barangays = [];
+        if ($incident->municipality) {
+            $barangays = \App\Services\LocationService::getBarangays($incident->municipality);
         }
 
-        // If maintain_other_fields is set, only update status and resolution_notes
-        if ($request->has('maintain_other_fields')) {
-            $validated = $request->validate([
-                'status' => 'required|in:pending,active,resolved,closed',
-                'resolution_notes' => 'nullable|string',
-            ]);
+        return view('Incident.edit', compact('incident', 'staff', 'vehicles', 'municipalities', 'barangays'));
+    }
 
-            // Set resolved_at when status changes to resolved
-            if ($validated['status'] === 'resolved' && $incident->status !== 'resolved') {
-                $validated['resolved_at'] = now();
-            }
-        } else {
-            // Full validation for complete form updates
-            $validated = $request->validate([
-                'incident_type' => 'required|in:traffic_accident,medical_emergency,fire_incident,natural_disaster,criminal_activity,other',
-                'severity_level' => 'required|in:critical,high,medium,low',
-                'status' => 'required|in:pending,active,resolved,closed',
-                'location' => 'required|string|max:255',
-                'municipality' => 'required|string|max:255',
-                'barangay' => 'required|string|max:255',
-                'latitude' => 'nullable|numeric|between:-90,90',
-                'longitude' => 'nullable|numeric|between:-180,180',
-                'description' => 'required|string',
-                'incident_date' => 'required|date',
-                'weather_condition' => 'nullable|in:clear,cloudy,rainy,stormy,foggy',
-                'road_condition' => 'nullable|in:dry,wet,slippery,damaged,under_construction',
-                'casualty_count' => 'integer|min:0',
-                'injury_count' => 'integer|min:0',
-                'fatality_count' => 'integer|min:0',
-                'property_damage_estimate' => 'nullable|numeric|min:0',
-                'damage_description' => 'nullable|string',
-                'vehicle_involved' => 'boolean',
-                'vehicle_details' => 'nullable|string',
-                'assigned_staff_id' => 'nullable|exists:users,id',
-                'assigned_vehicle_id' => 'nullable|exists:vehicles,id',
-                'resolution_notes' => 'nullable|string',
-                'photos' => 'nullable|array|max:5',
-                'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048', // Max 5 photos, 2MB each
-            ]);
+    public function update(UpdateIncidentRequest $request, Incident $incident, IncidentService $incidentService)
+    {
+        try {
+            // Get validated data
+            $validated = $request->validated();
 
-            // Handle photo uploads
-            $photoPaths = $incident->photos ?? [];
-            if ($request->hasFile('photos')) {
-                foreach ($request->file('photos') as $photo) {
-                    $path = $photo->store('incident_photos', 'public');
-                    $photoPaths[] = $path;
+            // If this is a quick status update
+            if ($request->has('maintain_other_fields')) {
+                // Set resolved_at when status changes to resolved
+                if ($validated['status'] === 'resolved' && $incident->status !== 'resolved') {
+                    $validated['resolved_at'] = now();
                 }
+
+                $incident->update($validated);
+
+                // Log activity
+                activity()
+                    ->performedOn($incident)
+                    ->withProperties(['status' => $validated['status']])
+                    ->log('Incident status updated');
+
+                return redirect()
+                    ->route('incidents.show', $incident)
+                    ->with('success', 'Incident status updated successfully!');
             }
-            $validated['photos'] = $photoPaths;
+
+            // Full update - process license plates
+            if (isset($validated['license_plates_input']) && !empty($validated['license_plates_input'])) {
+                $validated['license_plates'] = array_map('trim', explode(',', $validated['license_plates_input']));
+                unset($validated['license_plates_input']);
+            }
 
             // Set resolved_at when status changes to resolved
-            if ($validated['status'] === 'resolved' && $incident->status !== 'resolved') {
+            if (isset($validated['status']) && $validated['status'] === 'resolved' && $incident->status !== 'resolved') {
                 $validated['resolved_at'] = now();
             }
+
+            // Update incident using service
+            $incident = $incidentService->updateIncident($incident, $validated);
+
+            return redirect()
+                ->route('incidents.show', $incident)
+                ->with('success', 'Incident updated successfully!');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to update incident: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to update incident. Please check all fields and try again. Error: ' . $e->getMessage());
         }
-
-        $oldValues = $incident->toArray();
-        $incident->update($validated);
-
-        // Log activity
-        activity()
-            ->performedOn($incident)
-            ->withProperties(['old' => $oldValues, 'attributes' => $validated])
-            ->log('Incident updated');
-
-        return redirect()->route('incidents.show', $incident)
-                        ->with('success', 'Incident updated successfully!');
     }
 
-    public function destroy(Incident $incident)
+    public function destroy(Incident $incident, IncidentService $incidentService)
     {
+        // Check if incident is already soft deleted
+        if ($incident->trashed()) {
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This incident has already been deleted.'
+                ], 410); // 410 Gone - resource permanently deleted
+            }
+
+            return redirect()
+                ->route('incidents.index')
+                ->with('warning', 'This incident has already been deleted.');
+        }
+
         // Only admin can delete incidents
         if (Auth::user()->role !== 'admin') {
-            return back()->with('error', 'You do not have permission to delete incidents.');
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to delete incidents.'
+                ], 403);
+            }
+            abort(403, 'You do not have permission to delete incidents.');
         }
 
-        $incidentData = $incident->toArray();
-        $incident->delete();
+        try {
+            $incidentNumber = $incident->incident_number;
+            $incidentId = $incident->id;
 
-        // Log activity
-        activity()
-            ->withProperties(['attributes' => $incidentData])
-            ->log('Incident deleted');
+            // Delete incident using service
+            $incidentService->deleteIncident($incident);
 
-        return redirect()->route('incidents.index')
-                        ->with('success', 'Incident deleted successfully!');
+            // Return JSON for AJAX requests
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Incident {$incidentNumber} has been deleted successfully!",
+                    'incident_id' => $incidentId
+                ]);
+            }
+
+            // Regular redirect for non-AJAX requests
+            return redirect()
+                ->route('incidents.index')
+                ->with('success', "Incident {$incidentNumber} has been deleted successfully!");
+
+        } catch (\Exception $e) {
+            Log::error('Failed to delete incident: ' . $e->getMessage(), [
+                'incident_id' => $incident->id ?? 'unknown',
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to delete incident. Please try again.',
+                    'error' => config('app.debug') ? $e->getMessage() : null
+                ], 500);
+            }
+
+            return back()
+                ->with('error', 'Failed to delete incident. Please try again.');
+        }
     }
 
     // API Methods for mobile and AJAX
     public function apiIndex(Request $request)
     {
         $query = Incident::with(['assignedStaff', 'assignedVehicle'])
-                         ->when($request->municipality, function ($q, $municipality) {
-                             return $q->byMunicipality($municipality);
-                         })
-                         ->when($request->severity, function ($q, $severity) {
-                             return $q->bySeverity($severity);
-                         })
-                         ->when($request->status, function ($q, $status) {
-                             return $q->byStatus($status);
-                         });
+            ->when($request->municipality, function ($q, $municipality) {
+                return $q->byMunicipality($municipality);
+            })
+            ->when($request->severity, function ($q, $severity) {
+                return $q->bySeverity($severity);
+            })
+            ->when($request->status, function ($q, $status) {
+                return $q->byStatus($status);
+            });
 
         $incidents = $query->latest('incident_date')->get();
 
@@ -364,11 +369,6 @@ class IncidentController extends Controller
             'municipalities' => $municipalities,
         ]);
     }
-
-
-
-
-
 }
 
 

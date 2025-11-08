@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\Incident;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Http\Requests\StoreVehicleRequest;
+use App\Http\Requests\UpdateVehicleRequest;
 
 class VehicleController extends Controller
 {
@@ -77,40 +79,25 @@ class VehicleController extends Controller
         return view('Vehicle.create', compact('drivers'));
     }
     
-    public function store(Request $request)
+    public function store(StoreVehicleRequest $request)
     {
-        $validated = $request->validate([
-            'vehicle_number' => 'required|string|unique:vehicles,vehicle_number',
-            'license_plate' => 'required|string|unique:vehicles,license_plate',
-            'vehicle_type' => 'required|in:ambulance,fire_truck,rescue_vehicle,patrol_car,support_vehicle',
-            'make' => 'required|string|max:100',
-            'model' => 'required|string|max:100',
-            'year' => 'required|integer|min:1990|max:' . (date('Y') + 1),
-            'color' => 'required|string|max:50',
-            'fuel_capacity' => 'required|numeric|min:1',
-            'municipality' => 'required|string|max:255',
-            'assigned_driver_id' => 'nullable|exists:users,id',
-            'equipment_list' => 'nullable|array',
-            'insurance_policy' => 'nullable|string',
-            'insurance_expiry' => 'nullable|date|after:today',
-            'registration_expiry' => 'nullable|date|after:today',
-        ]);
-        
+        $validated = $request->validated();
+
         // Set default values
         $validated['status'] = 'available';
         $validated['current_fuel_level'] = 100;
         $validated['gps_enabled'] = true;
         $validated['odometer_reading'] = 0;
         $validated['total_distance'] = 0;
-        
+
         $vehicle = Vehicle::create($validated);
-        
+
         // Log activity
         activity()
             ->performedOn($vehicle)
             ->withProperties(['attributes' => $validated])
             ->log('Vehicle added to fleet');
-        
+
         return redirect()->route('vehicles.show', $vehicle)
                         ->with('success', 'Vehicle added to fleet successfully.');
     }
@@ -151,43 +138,19 @@ class VehicleController extends Controller
         return view('Vehicle.edit', compact('vehicle', 'drivers'));
     }
     
-    public function update(Request $request, Vehicle $vehicle)
+    public function update(UpdateVehicleRequest $request, Vehicle $vehicle)
     {
-        // Check access permissions
-        if (Auth::user()->role !== 'admin' && Auth::user()->municipality !== $vehicle->municipality) {
-            abort(403, 'You do not have permission to update this vehicle.');
-        }
-        
-        $validated = $request->validate([
-            'vehicle_number' => ['required', 'string', Rule::unique('vehicles', 'vehicle_number')->ignore($vehicle->id)],
-            'license_plate' => ['required', 'string', Rule::unique('vehicles', 'license_plate')->ignore($vehicle->id)],
-            'vehicle_type' => 'required|in:ambulance,fire_truck,rescue_vehicle,patrol_car,support_vehicle',
-            'status' => 'required|in:available,in_use,maintenance,out_of_service',
-            'make' => 'required|string|max:100',
-            'model' => 'required|string|max:100',
-            'year' => 'required|integer|min:1990|max:' . (date('Y') + 1),
-            'color' => 'required|string|max:50',
-            'fuel_capacity' => 'required|numeric|min:1',
-            'current_fuel_level' => 'required|numeric|min:0|max:100',
-            'odometer_reading' => 'required|integer|min:0',
-            'municipality' => 'required|string|max:255',
-            'assigned_driver_id' => 'nullable|exists:users,id',
-            'equipment_list' => 'nullable|array',
-            'insurance_policy' => 'nullable|string',
-            'insurance_expiry' => 'nullable|date',
-            'registration_expiry' => 'nullable|date',
-            'maintenance_notes' => 'nullable|string',
-        ]);
-        
+        $validated = $request->validated();
+
         $oldValues = $vehicle->toArray();
         $vehicle->update($validated);
-        
+
         // Log activity
         activity()
             ->performedOn($vehicle)
             ->withProperties(['old' => $oldValues, 'attributes' => $validated])
             ->log('Vehicle updated');
-        
+
         return redirect()->route('vehicles.show', $vehicle)
                         ->with('success', 'Vehicle updated successfully.');
     }

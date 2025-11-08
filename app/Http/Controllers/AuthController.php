@@ -18,7 +18,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return $this->redirectBasedOnRole();
         }
-        
+
         return view('Auth.Login');
     }
 
@@ -41,7 +41,7 @@ class AuthController extends Controller
 
         // Check for user and account lockout
         $user = User::where('email', $email)->first();
-        
+
         if ($user && $user->isAccountLocked()) {
             $this->logLoginAttempt($email, $ipAddress, $userAgent, false, 'account_locked');
             return back()->withErrors([
@@ -51,16 +51,16 @@ class AuthController extends Controller
 
         // Attempt authentication
         $credentials = ['email' => $email, 'password' => $password, 'is_active' => true];
-        
+
         if (Auth::attempt($credentials, $remember)) {
             $user = Auth::user();
-            
+
             // Skip email verification in local environment
             if (!$user->hasVerifiedEmail() && app()->environment('local')) {
                 // In development, we'll mark the email as verified for testing
                 $user->markEmailAsVerified();
             }
-            
+
             // Check if email is verified (required in production)
             if (!$user->hasVerifiedEmail()) {
                 Auth::logout();
@@ -69,43 +69,43 @@ class AuthController extends Controller
                     'email' => 'Please verify your email address before logging in. Check your inbox for verification link.',
                 ])->withInput($request->only('email'));
             }
-            
+
             // Reset failed login attempts on successful authentication
             $user->resetFailedLogins();
-            
+
             // Skip 2FA in local development environment
             if (app()->environment('local')) {
                 // Direct login without 2FA in development
                 $user->updateLastLogin();
                 $this->logLoginAttempt($email, $ipAddress, $userAgent, true, 'completed_login_dev');
-                activity()
+                activity('login')
                     ->performedOn($user)
                     ->withProperties(['ip_address' => $ipAddress, 'user_agent' => $userAgent, 'step' => 'completed_login_dev'])
                     ->log('User completed login directly (dev environment - 2FA bypassed)');
-                
+
                 return $this->redirectBasedOnRole($user);
             }
-            
+
             // Generate and send 2FA code (for production)
             $user->generateTwoFactorCode();
-            
+
             // Store user ID in session for 2FA verification
             $request->session()->put('2fa_user_id', $user->id);
             $request->session()->put('2fa_remember', $remember);
             $request->session()->put('2fa_login_time', now());
-            
+
             // Log the initial authentication (not complete login yet)
             $this->logLoginAttempt($email, $ipAddress, $userAgent, true, 'pending_2fa');
-            
+
             // Log activity
-            activity()
+            activity('login')
                 ->performedOn($user)
                 ->withProperties(['ip_address' => $ipAddress, 'user_agent' => $userAgent, 'step' => 'initial_auth'])
                 ->log('User passed initial authentication, pending 2FA');
-            
+
             // Logout user temporarily until 2FA is verified
             Auth::logout();
-            
+
             return redirect()->route('2fa.verify')
                 ->with('success', '2FA code sent to your email. Please check your inbox.');
         } else {
@@ -113,10 +113,10 @@ class AuthController extends Controller
             if ($user) {
                 $user->incrementFailedLogins();
             }
-            
+
             // Log failed login
             $this->logLoginAttempt($email, $ipAddress, $userAgent, false, 'invalid_credentials');
-            
+
             return back()->withErrors([
                 'email' => 'Invalid credentials or account is disabled.',
             ])->withInput($request->only('email'));
@@ -126,10 +126,10 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $user = Auth::user();
-        
+
         // Log activity
         if ($user) {
-            activity()
+            activity('login')
                 ->withProperties(['ip_address' => $request->ip()])
                 ->log('User logged out');
         }
@@ -147,7 +147,7 @@ class AuthController extends Controller
         if (!Auth::check() || !Auth::user()->isAdmin()) {
             abort(403, 'Only administrators can register new users.');
         }
-        
+
         return view('Auth.Register');
     }
 
@@ -218,7 +218,7 @@ class AuthController extends Controller
         if ($request->isMethod('get')) {
             return view('Auth.ResetPassword', ['token' => $request->token, 'email' => $request->email]);
         }
-        
+
         return $this->updatePassword($request);
     }
 
@@ -254,27 +254,27 @@ class AuthController extends Controller
         $remember = $request->session()->get('2fa_remember', false);
         $ipAddress = $request->ip();
         $userAgent = $request->userAgent();
-        
+
         // Log the user in
         Auth::login($user, $remember);
-        
+
         // Update last login timestamp
         $user->updateLastLogin();
-        
+
         // Clear 2FA session data
         $request->session()->forget(['2fa_user_id', '2fa_remember', '2fa_login_time']);
-        
+
         // Log successful complete login
         $this->logLoginAttempt($user->email, $ipAddress, $userAgent, true, 'completed_with_2fa');
-        
+
         // Log activity
-        activity()
+        activity('login')
             ->performedOn($user)
             ->withProperties(['ip_address' => $ipAddress, 'user_agent' => $userAgent, 'step' => 'completed_login'])
             ->log('User completed login with 2FA verification');
-        
+
         $request->session()->regenerate();
-        
+
         return $this->redirectBasedOnRole($user);
     }
 
@@ -282,7 +282,7 @@ class AuthController extends Controller
     private function redirectBasedOnRole($user = null)
     {
         $user = $user ?: Auth::user();
-        
+
         return match($user->role) {
             'admin' => redirect()->route('admin.dashboard'),
             'staff' => redirect()->route('staff.dashboard'),
