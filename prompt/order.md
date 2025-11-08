@@ -1,1 +1,0 @@
-can we minimize using javascript in my entire file , let the controller handle the logic or the model since MVC approach in laravel using best practices to be more clean and readable
