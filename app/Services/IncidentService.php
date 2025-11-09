@@ -8,9 +8,20 @@ use App\Models\Vehicle;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use App\Services\MediaService;
 
 class IncidentService
 {
+    protected MediaService $mediaService;
+
+    /**
+     * Constructor with MediaService dependency injection
+     */
+    public function __construct(MediaService $mediaService)
+    {
+        $this->mediaService = $mediaService;
+    }
+
     /**
      * Create incident with all related data (victims, media, assignments)
      * Uses database transaction for data integrity
@@ -22,25 +33,7 @@ class IncidentService
     public function createIncident(array $data): Incident
     {
         return DB::transaction(function () use ($data) {
-            // Extract and process media
-            $photoPaths = [];
-            $videoPaths = [];
-
-            if (isset($data['photos'])) {
-                $photoPaths = $this->processPhotos($data['photos']);
-                unset($data['photos']);
-            }
-
-            if (isset($data['videos'])) {
-                $videoPaths = $this->processVideos($data['videos']);
-                unset($data['videos']);
-            }
-
-            // Extract victims data if any
-            $victimsData = $data['victims'] ?? [];
-            unset($data['victims']);
-
-            // Generate incident number with built-in retry logic
+            // Generate incident number first (needed for organized storage paths)
             try {
                 $incidentNumber = Incident::generateIncidentNumber();
             } catch (\RuntimeException $e) {
@@ -55,6 +48,37 @@ class IncidentService
                     $e
                 );
             }
+
+            // Extract municipality for organized storage
+            $municipality = $data['municipality'] ?? 'unknown';
+
+            // Extract and process media using MediaService (with compression and organized structure)
+            $photoPaths = [];
+            $videoPaths = [];
+
+            if (isset($data['photos'])) {
+                try {
+                    $photoPaths = $this->mediaService->uploadPhotos($data['photos'], $municipality, $incidentNumber);
+                } catch (\Exception $e) {
+                    Log::error('Photo upload failed', ['error' => $e->getMessage()]);
+                    // Continue with incident creation even if photo upload fails
+                }
+                unset($data['photos']);
+            }
+
+            if (isset($data['videos'])) {
+                try {
+                    $videoPaths = $this->mediaService->uploadVideos($data['videos'], $municipality, $incidentNumber);
+                } catch (\Exception $e) {
+                    Log::error('Video upload failed', ['error' => $e->getMessage()]);
+                    // Continue with incident creation
+                }
+                unset($data['videos']);
+            }
+
+            // Extract victims data if any
+            $victimsData = $data['victims'] ?? [];
+            unset($data['victims']);
 
             // Create incident
             $incident = Incident::create([
@@ -110,18 +134,32 @@ class IncidentService
         return DB::transaction(function () use ($incident, $data) {
             $oldValues = $incident->toArray();
 
-            // Handle new photos
+            // Handle new photos using MediaService
             if (isset($data['photos'])) {
-                $newPhotos = $this->processPhotos($data['photos']);
-                $existingPhotos = $incident->photos ?? [];
-                $data['photos'] = array_merge($existingPhotos, $newPhotos);
+                try {
+                    $municipality = $incident->municipality;
+                    $incidentNumber = $incident->incident_number;
+                    $newPhotos = $this->mediaService->uploadPhotos($data['photos'], $municipality, $incidentNumber);
+                    $existingPhotos = $incident->photos ?? [];
+                    $data['photos'] = array_merge($existingPhotos, $newPhotos);
+                } catch (\Exception $e) {
+                    Log::error('Photo upload failed during update', ['error' => $e->getMessage()]);
+                    unset($data['photos']); // Don't update photos if upload fails
+                }
             }
 
-            // Handle new videos
+            // Handle new videos using MediaService
             if (isset($data['videos'])) {
-                $newVideos = $this->processVideos($data['videos']);
-                $existingVideos = $incident->videos ?? [];
-                $data['videos'] = array_merge($existingVideos, $newVideos);
+                try {
+                    $municipality = $incident->municipality;
+                    $incidentNumber = $incident->incident_number;
+                    $newVideos = $this->mediaService->uploadVideos($data['videos'], $municipality, $incidentNumber);
+                    $existingVideos = $incident->videos ?? [];
+                    $data['videos'] = array_merge($existingVideos, $newVideos);
+                } catch (\Exception $e) {
+                    Log::error('Video upload failed during update', ['error' => $e->getMessage()]);
+                    unset($data['videos']); // Don't update videos if upload fails
+                }
             }
 
             // Update incident
@@ -151,13 +189,16 @@ class IncidentService
     }
 
     /**
-     * Process and store photo uploads
+     * Process and store photo uploads (LEGACY - now handled by MediaService)
+     * Kept for backward compatibility
      *
+     * @deprecated Use MediaService::uploadPhotos() instead
      * @param array $photos
      * @return array
      */
     private function processPhotos(array $photos): array
     {
+        Log::warning('Using deprecated processPhotos method. Please use MediaService instead.');
         $paths = [];
         foreach ($photos as $photo) {
             if ($photo && $photo->isValid()) {
@@ -169,13 +210,16 @@ class IncidentService
     }
 
     /**
-     * Process and store video uploads
+     * Process and store video uploads (LEGACY - now handled by MediaService)
+     * Kept for backward compatibility
      *
+     * @deprecated Use MediaService::uploadVideos() instead
      * @param array $videos
      * @return array
      */
     private function processVideos(array $videos): array
     {
+        Log::warning('Using deprecated processVideos method. Please use MediaService instead.');
         $paths = [];
         foreach ($videos as $video) {
             if ($video && $video->isValid()) {
@@ -338,8 +382,8 @@ class IncidentService
             unset($photos[$key]);
             $incident->update(['photos' => array_values($photos)]);
 
-            // Delete from storage
-            Storage::disk('public')->delete($photoPath);
+            // Delete from storage using MediaService (handles thumbnails too)
+            $this->mediaService->deletePhoto($photoPath);
 
             return true;
         }
@@ -362,8 +406,8 @@ class IncidentService
             unset($videos[$key]);
             $incident->update(['videos' => array_values($videos)]);
 
-            // Delete from storage
-            Storage::disk('public')->delete($videoPath);
+            // Delete from storage using MediaService
+            $this->mediaService->deleteVideo($videoPath);
 
             return true;
         }
@@ -381,17 +425,17 @@ class IncidentService
     public function deleteIncident(Incident $incident): bool
     {
         return DB::transaction(function () use ($incident) {
-            // Delete all photos from storage
+            // Delete all photos from storage using MediaService (handles thumbnails and compressed versions)
             if ($incident->photos && is_array($incident->photos)) {
                 foreach ($incident->photos as $photo) {
-                    Storage::disk('public')->delete($photo);
+                    $this->mediaService->deletePhoto($photo);
                 }
             }
 
-            // Delete all videos from storage
+            // Delete all videos from storage using MediaService
             if ($incident->videos && is_array($incident->videos)) {
                 foreach ($incident->videos as $video) {
-                    Storage::disk('public')->delete($video);
+                    $this->mediaService->deleteVideo($video);
                 }
             }
 

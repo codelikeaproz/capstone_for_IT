@@ -50,11 +50,11 @@ class StoreIncidentRequest extends FormRequest
             'property_damage_estimate' => 'nullable|numeric|min:0',
             'damage_description' => 'nullable|string',
 
-            // Step 4: Media (Photos required)
-            'photos' => 'required|array|min:1|max:5',
-            'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-            'videos' => 'nullable|array|max:2',
-            'videos.*' => 'mimetypes:video/mp4,video/webm,video/quicktime|max:10240',
+            // Step 4: Media (Photos required) - OPTIMIZED with stricter validation
+            'photos' => 'required|array|min:1|max:' . config('media.photos.max_count', 5),
+            'photos.*' => 'image|mimes:' . config('media.photos.validation.mimes', 'jpeg,png,jpg,gif,webp') . '|max:' . config('media.photos.validation.max_size', 3072),
+            'videos' => 'nullable|array|max:' . config('media.videos.max_count', 2),
+            'videos.*' => 'mimetypes:video/mp4,video/webm,video/quicktime|max:' . config('media.videos.validation.max_size', 20480),
 
             // Step 5: Assignment
             'assigned_staff_id' => 'nullable|exists:users,id',
@@ -169,13 +169,13 @@ class StoreIncidentRequest extends FormRequest
             'description.min' => 'Description must be at least 20 characters.',
             'photos.required' => 'Please upload at least one photo of the incident.',
             'photos.min' => 'Please upload at least one photo.',
-            'photos.max' => 'You can upload a maximum of 5 photos.',
+            'photos.max' => 'You can upload a maximum of ' . config('media.photos.max_count', 5) . ' photos.',
             'photos.*.image' => 'All photo files must be valid images.',
-            'photos.*.mimes' => 'Photos must be in JPG, PNG, or GIF format.',
-            'photos.*.max' => 'Each photo must not exceed 2MB in size.',
-            'videos.max' => 'You can upload a maximum of 2 videos.',
+            'photos.*.mimes' => 'Photos must be in JPG, PNG, GIF, or WebP format.',
+            'photos.*.max' => 'Each photo must not exceed ' . (config('media.photos.validation.max_size', 3072) / 1024) . 'MB in size.',
+            'videos.max' => 'You can upload a maximum of ' . config('media.videos.max_count', 2) . ' videos.',
             'videos.*.mimetypes' => 'Videos must be in MP4, WebM, or MOV format.',
-            'videos.*.max' => 'Each video must not exceed 10MB in size.',
+            'videos.*.max' => 'Each video must not exceed ' . (config('media.videos.validation.max_size', 20480) / 1024) . 'MB in size.',
         ];
     }
 
