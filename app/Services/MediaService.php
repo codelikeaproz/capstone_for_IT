@@ -125,6 +125,7 @@ class MediaService
                 default => throw new Exception('Unsupported image type: ' . $mimeType)
             };
 
+
             if (!$image) {
                 throw new Exception('Failed to create image resource');
             }
