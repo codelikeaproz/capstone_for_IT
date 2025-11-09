@@ -113,15 +113,15 @@ class MediaService
 
         try {
             // Read image
-            $imageInfo = getimagesize($photo->getRealPath());
+            $imageInfo = \getimagesize($photo->getRealPath());
             $mimeType = $imageInfo['mime'];
 
             // Create image resource based on type
             $image = match ($mimeType) {
-                'image/jpeg' => imagecreatefromjpeg($photo->getRealPath()),
-                'image/png' => imagecreatefrompng($photo->getRealPath()),
-                'image/gif' => imagecreatefromgif($photo->getRealPath()),
-                'image/webp' => imagecreatefromwebp($photo->getRealPath()),
+                'image/jpeg' => \imagecreatefromjpeg($photo->getRealPath()),
+                'image/png' => \imagecreatefrompng($photo->getRealPath()),
+                'image/gif' => \imagecreatefromgif($photo->getRealPath()),
+                'image/webp' => \imagecreatefromwebp($photo->getRealPath()),
                 default => throw new Exception('Unsupported image type: ' . $mimeType)
             };
 
@@ -130,8 +130,8 @@ class MediaService
             }
 
             // Get original dimensions
-            $originalWidth = imagesx($image);
-            $originalHeight = imagesy($image);
+            $originalWidth = \imagesx($image);
+            $originalHeight = \imagesy($image);
 
             // Calculate new dimensions while maintaining aspect ratio
             $newDimensions = $this->calculateDimensions(
@@ -142,16 +142,16 @@ class MediaService
             );
 
             // Create resized image
-            $resizedImage = imagecreatetruecolor($newDimensions['width'], $newDimensions['height']);
+            $resizedImage = \imagecreatetruecolor($newDimensions['width'], $newDimensions['height']);
 
             // Preserve transparency for PNG
             if ($mimeType === 'image/png') {
-                imagealphablending($resizedImage, false);
-                imagesavealpha($resizedImage, true);
+                \imagealphablending($resizedImage, false);
+                \imagesavealpha($resizedImage, true);
             }
 
             // Resize
-            imagecopyresampled(
+            \imagecopyresampled(
                 $resizedImage,
                 $image,
                 0, 0, 0, 0,
@@ -167,8 +167,8 @@ class MediaService
 
             // Ensure directory exists
             $directory = dirname($fullPath);
-            if (!is_dir($directory)) {
-                mkdir($directory, 0755, true);
+            if (!\is_dir($directory)) {
+                \mkdir($directory, 0755, true);
             }
 
             // Save based on configured format
@@ -179,14 +179,14 @@ class MediaService
                 // Change extension to jpg
                 $compressedPath = preg_replace('/\.[^.]+$/', '.jpg', $compressedPath);
                 $fullPath = preg_replace('/\.[^.]+$/', '.jpg', $fullPath);
-                imagejpeg($resizedImage, $fullPath, $quality);
+                \imagejpeg($resizedImage, $fullPath, $quality);
             } else {
-                imagejpeg($resizedImage, $fullPath, $quality);
+                \imagejpeg($resizedImage, $fullPath, $quality);
             }
 
             // Free memory
-            imagedestroy($image);
-            imagedestroy($resizedImage);
+            \imagedestroy($image);
+            \imagedestroy($resizedImage);
 
             Log::info('Photo compressed successfully', [
                 'original_size' => $photo->getSize(),
@@ -222,14 +222,14 @@ class MediaService
         $sizes = config('media.photos.thumbnails.sizes', []);
 
         try {
-            $imageInfo = getimagesize($photo->getRealPath());
+            $imageInfo = \getimagesize($photo->getRealPath());
             $mimeType = $imageInfo['mime'];
 
             $image = match ($mimeType) {
-                'image/jpeg' => imagecreatefromjpeg($photo->getRealPath()),
-                'image/png' => imagecreatefrompng($photo->getRealPath()),
-                'image/gif' => imagecreatefromgif($photo->getRealPath()),
-                'image/webp' => imagecreatefromwebp($photo->getRealPath()),
+                'image/jpeg' => \imagecreatefromjpeg($photo->getRealPath()),
+                'image/png' => \imagecreatefrompng($photo->getRealPath()),
+                'image/gif' => \imagecreatefromgif($photo->getRealPath()),
+                'image/webp' => \imagecreatefromwebp($photo->getRealPath()),
                 default => null
             };
 
@@ -241,22 +241,22 @@ class MediaService
                 [$width, $height] = $dimensions;
 
                 // Create thumbnail
-                $thumbnail = imagecreatetruecolor($width, $height);
+                $thumbnail = \imagecreatetruecolor($width, $height);
 
                 // Preserve transparency
                 if ($mimeType === 'image/png') {
-                    imagealphablending($thumbnail, false);
-                    imagesavealpha($thumbnail, true);
+                    \imagealphablending($thumbnail, false);
+                    \imagesavealpha($thumbnail, true);
                 }
 
-                imagecopyresampled(
+                \imagecopyresampled(
                     $thumbnail,
                     $image,
                     0, 0, 0, 0,
                     $width,
                     $height,
-                    imagesx($image),
-                    imagesy($image)
+                    \imagesx($image),
+                    \imagesy($image)
                 );
 
                 // Save thumbnail
@@ -264,20 +264,20 @@ class MediaService
                 $fullPath = storage_path('app/public/' . $thumbnailPath);
 
                 $directory = dirname($fullPath);
-                if (!is_dir($directory)) {
-                    mkdir($directory, 0755, true);
+                if (!\is_dir($directory)) {
+                    \mkdir($directory, 0755, true);
                 }
 
                 // Change to jpg and save
                 $thumbnailPath = preg_replace('/\.[^.]+$/', '.jpg', $thumbnailPath);
                 $fullPath = preg_replace('/\.[^.]+$/', '.jpg', $fullPath);
-                imagejpeg($thumbnail, $fullPath, 80);
+                \imagejpeg($thumbnail, $fullPath, 80);
 
-                imagedestroy($thumbnail);
+                \imagedestroy($thumbnail);
                 $thumbnails[$sizeName] = $thumbnailPath;
             }
 
-            imagedestroy($image);
+            \imagedestroy($image);
 
             Log::info('Thumbnails generated', [
                 'count' => count($thumbnails),
@@ -384,7 +384,7 @@ class MediaService
 
         // Check dimensions if configured
         if (isset($config['max_dimensions'])) {
-            $imageInfo = getimagesize($photo->getRealPath());
+            $imageInfo = \getimagesize($photo->getRealPath());
             [$width, $height] = $imageInfo;
             [$maxWidth, $maxHeight] = $config['max_dimensions'];
 
