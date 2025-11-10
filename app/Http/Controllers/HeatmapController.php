@@ -16,7 +16,10 @@ class HeatmapController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $municipality = $user->role === 'admin' ? null : $user->municipality;
+
+        // SuperAdmins see all municipalities, Admins see only their municipality
+        // Following SuperAdmin Feature implementation
+        $municipality = $user->isSuperAdmin() ? null : $user->municipality;
 
 
         // Get incidents with location data
