@@ -214,33 +214,33 @@
             </div>
         </div>
 
-        {{-- Bulk Actions --}}
-        @if($requests->count() > 0)
-        <div class="card bg-white shadow-sm mb-4">
-            <div class="card-body p-4">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="selectAll" class="checkbox checkbox-primary" onclick="toggleSelectAll()">
-                        <span class="text-sm font-medium">Select All</span>
-                    </label>
-                    <div class="flex gap-2 flex-wrap">
-                        <button type="button" onclick="bulkApprove()" class="btn btn-success btn-sm gap-2" id="bulkApproveBtn" disabled>
-                            <i class="fas fa-check"></i>
-                            <span>Approve Selected</span>
-                        </button>
-                        <button type="button" onclick="bulkReject()" class="btn btn-error btn-sm gap-2" id="bulkRejectBtn" disabled>
-                            <i class="fas fa-times"></i>
-                            <span>Reject Selected</span>
-                        </button>
-                    </div>
-                    <span class="text-sm text-gray-600 ml-auto" id="selectedCount">0 selected</span>
-                </div>
-            </div>
-        </div>
-        @endif
-
         {{-- Requests Table --}}
         <div class="card bg-white shadow-sm">
+               {{-- Bulk Actions --}}
+            @if($requests->count() > 0)
+            <div class="card bg-white  mb-3 border-b border-base-300">
+                <div class="card-body p-3">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="selectAll" class="checkbox checkbox-primary" onclick="toggleSelectAll()">
+                            <span class="text-sm font-medium">Select All</span>
+                        </label>
+                        <div class="flex gap-2 flex-wrap">
+                            <button type="button" onclick="bulkApprove()" class="btn btn-success btn-sm gap-2" id="bulkApproveBtn" disabled>
+                                <i class="fas fa-check"></i>
+                                <span>Approve Selected</span>
+                            </button>
+                            <button type="button" onclick="bulkReject()" class="btn btn-error btn-sm gap-2" id="bulkRejectBtn" disabled>
+                                <i class="fas fa-times"></i>
+                                <span>Reject Selected</span>
+                            </button>
+                        </div>
+                        <span class="text-sm text-gray-600 ml-auto" id="selectedCount">0 selected</span>
+                    </div>
+                </div>
+            </div>
+            {{-- <hr class="w-full h-0.25 mx-auto  bg-gray-100 border-0 rounded-sm  dark:bg-gray-300  "> --}}
+        @endif
             <div class="card-body p-0">
                 <div class="overflow-x-auto">
                     <table class="table table-zebra w-full">
@@ -324,27 +324,27 @@
                                     </td>
                                     <td>
                                         <div class="flex gap-1 justify-end">
-                                            <a href="{{ route('requests.show', $request) }}" 
-                                               class="btn btn-ghost btn-sm btn-square" 
+                                            <a href="{{ route('requests.show', $request) }}"
+                                               class="btn btn-ghost btn-sm btn-square"
                                                title="View Details">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             @if(in_array($request->status, ['pending', 'processing']))
-                                                <a href="{{ route('requests.edit', $request) }}" 
-                                                   class="btn btn-ghost btn-sm btn-square" 
+                                                <a href="{{ route('requests.edit', $request) }}"
+                                                   class="btn btn-ghost btn-sm btn-square"
                                                    title="Edit Request">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                             @endif
                                             @if(auth()->user()->role === 'admin')
-                                                <form action="{{ route('requests.destroy', $request) }}" 
-                                                      method="POST" 
+                                                <form action="{{ route('requests.destroy', $request) }}"
+                                                      method="POST"
                                                       class="inline"
                                                       onsubmit="return confirm('Are you sure you want to delete this request?')">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" 
-                                                            class="btn btn-ghost btn-sm btn-square text-error" 
+                                                    <button type="submit"
+                                                            class="btn btn-ghost btn-sm btn-square text-error"
                                                             title="Delete Request">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
@@ -460,7 +460,7 @@
         const approveBtn = document.getElementById('bulkApproveBtn');
         const rejectBtn = document.getElementById('bulkRejectBtn');
         const countSpan = document.getElementById('selectedCount');
-        
+
         countSpan.textContent = `${count} selected`;
         approveBtn.disabled = count === 0;
         rejectBtn.disabled = count === 0;
