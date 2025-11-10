@@ -83,7 +83,7 @@
         {{-- Main Logs Table Card --}}
         <div class="card bg-white shadow-lg">
             <div class="card-body p-0">
-                <div class="px-6 py-4 border-b border-gray-200">
+                <div class="px-4 py-6 border-b border-gray-200">
                     <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                         <div>
                             <h2 class="text-xl font-semibold text-gray-800">Activity Logs</h2>
@@ -165,9 +165,9 @@
                                     <th class="font-semibold text-gray-700">Time</th>
                                     <th class="font-semibold text-gray-700">Type</th>
                                     <th class="font-semibold text-gray-700">User</th>
-                                    <th class="font-semibold text-gray-700">Action</th>
-                                    <th class="font-semibold text-gray-700">IP Address</th>
-                                    <th class="font-semibold text-gray-700">Actions</th>
+                                    <th class="font-semibold text-gray-700">Email</th>
+                                    <th class="font-semibold text-gray-700">Activity</th>
+                                    <th class="font-semibold text-gray-700 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -184,41 +184,20 @@
                                         <td>
                                             @if($log->log_name === 'login')
                                                 @if(str_contains($log->description, 'completed login') || str_contains($log->description, 'logged in'))
-                                                    <span class="badge badge-success badge-lg gap-1">
-                                                        <i class="fas fa-sign-in-alt"></i>
-                                                        Login
-                                                    </span>
+                                                    <span class="badge badge-success">Login</span>
                                                 @elseif(str_contains($log->description, 'logged out'))
-                                                    <span class="badge badge-ghost badge-lg gap-1">
-                                                        <i class="fas fa-sign-out-alt"></i>
-                                                        Logout
-                                                    </span>
+                                                    <span class="badge badge-error">Logout</span>
                                                 @else
-                                                    <span class="badge badge-error badge-lg gap-1">
-                                                        <i class="fas fa-times-circle"></i>
-                                                        Failed
-                                                    </span>
+                                                    <span class="badge badge-error">Failed</span>
                                                 @endif
                                             @elseif(str_contains($log->description, 'created'))
-                                                <span class="badge badge-info badge-lg gap-1">
-                                                    <i class="fas fa-plus-circle"></i>
-                                                    Created
-                                                </span>
+                                                <span class="badge badge-success">Created</span>
                                             @elseif(str_contains($log->description, 'updated'))
-                                                <span class="badge badge-warning badge-lg gap-1">
-                                                    <i class="fas fa-edit"></i>
-                                                    Updated
-                                                </span>
+                                                <span class="badge badge-info">Updated</span>
                                             @elseif(str_contains($log->description, 'deleted'))
-                                                <span class="badge badge-error badge-lg gap-1">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                    Deleted
-                                                </span>
+                                                <span class="badge badge-error">Deleted</span>
                                             @else
-                                                <span class="badge badge-ghost badge-lg gap-1">
-                                                    <i class="fas fa-cogs"></i>
-                                                    Activity
-                                                </span>
+                                                <span class="badge badge-ghost">Activity</span>
                                             @endif
                                         </td>
                                         {{-- User Information --}}
@@ -255,33 +234,20 @@
                                                 <span class="text-sm text-gray-500 italic">System</span>
                                             @endif
                                         </td>
-                                        {{-- Action Description --}}
-                                        <td class="text-sm text-gray-700">
-                                            {{ Str::limit($log->description, 50) }}
-                                            @if($log->municipality)
-                                                <div class="text-xs text-gray-500 mt-1">
-                                                    <i class="fas fa-map-marker-alt mr-1"></i>{{ $log->municipality }}
-                                                </div>
+                                        {{-- Email --}}
+                                        <td>
+                                            @if($log->email)
+                                                <span class="text-sm text-gray-700">{{ $log->email }}</span>
+                                            @else
+                                                <span class="text-sm text-gray-400 italic">N/A</span>
                                             @endif
                                         </td>
-
-                                        {{-- IP Address --}}
-                                        <td>
-                                            @if($log->properties)
-                                                @php
-                                                    $properties = json_decode($log->properties, true);
-                                                @endphp
-                                                @if(is_array($properties) && isset($properties['ip_address']))
-                                                    <span class="text-sm font-medium text-gray-700">{{ $properties['ip_address'] }}</span>
-                                                @else
-                                                    <span class="text-sm text-gray-500 italic">N/A</span>
-                                                @endif
-                                            @else
-                                                <span class="text-sm text-gray-500 italic">N/A</span>
-                                            @endif
+                                        {{-- Activity Description --}}
+                                        <td class="text-sm text-gray-700">
+                                            <div class="font-medium">{{ Str::title(Str::limit($log->description, 60)) }}</div>
                                         </td>
                                         {{-- Actions Dropdown --}}
-                                        <td>
+                                        <td class="text-center">
                                             <div class="dropdown dropdown-end">
                                                 <button type="button"
                                                         tabindex="0"
@@ -299,22 +265,6 @@
                                                            role="menuitem">
                                                             <i class="fas fa-eye w-4" aria-hidden="true"></i>
                                                             <span>View Details</span>
-                                                        </a>
-                                                    </li>
-                                                    <li role="none">
-                                                        <a onclick="exportLog({{ $log->id }})"
-                                                           class="flex items-center gap-3 text-gray-700 hover:bg-primary hover:text-white min-h-[44px]"
-                                                           role="menuitem">
-                                                            <i class="fas fa-download w-4" aria-hidden="true"></i>
-                                                            <span>Export Log</span>
-                                                        </a>
-                                                    </li>
-                                                    <li role="none">
-                                                        <a onclick="copyLogId('{{ $log->id }}')"
-                                                           class="flex items-center gap-3 text-gray-700 hover:bg-primary hover:text-white min-h-[44px]"
-                                                           role="menuitem">
-                                                            <i class="fas fa-copy w-4" aria-hidden="true"></i>
-                                                            <span>Copy Log ID</span>
                                                         </a>
                                                     </li>
                                                     @if(str_contains($log->description, 'deleted'))
@@ -370,7 +320,7 @@
 
 {{-- Log Details Modal - Enhanced with DaisyUI Best Practices --}}
 <dialog id="logDetailsModal" class="modal modal-bottom sm:modal-middle">
-    <div class="modal-box max-w-4xl">
+    <div class="modal-box w-11/12 max-w-5xl" style="max-width: 80rem ;">
         <!-- Modal Header -->
         <div class="flex items-center justify-between mb-6 pb-4 border-b border-base-300">
             <div class="flex items-center gap-3">
@@ -395,15 +345,10 @@
         </div>
 
         <!-- Modal Actions -->
-        <div class="modal-action mt-8 pt-6 border-t border-base-300">
-            <form method="dialog" class="flex gap-3 w-full justify-end">
-                <button class="btn btn-outline gap-2">
-                    <i class="fas fa-times"></i>
+        <div class="modal-action mt-6">
+            <form method="dialog">
+                <button class="btn btn-primary w-full sm:w-auto">
                     Close
-                </button>
-                <button type="button" onclick="exportCurrentLog()" class="btn btn-primary gap-2">
-                    <i class="fas fa-download"></i>
-                    Export Log
                 </button>
             </form>
         </div>
@@ -418,9 +363,6 @@
 function showLogDetails(logData) {
     const modal = document.getElementById('logDetailsModal');
     const content = document.getElementById('logDetailsContent');
-
-    // Store log data for export functionality
-    currentLogData = logData;
 
     // Format date to Philippine Standard Time (12-hour format with AM/PM)
     const date = new Date(logData.created_at);
@@ -451,134 +393,71 @@ function showLogDetails(logData) {
     }
 
     content.innerHTML = `
-        <!-- Log Overview Card -->
-        <div class="card bg-gradient-to-br from-base-200 to-base-300 shadow-sm">
-            <div class="card-body p-6">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-3">
-                            <span class="badge badge-lg badge-primary gap-2">
-                                <i class="fas fa-hashtag"></i>
-                                ${logData.id}
-                            </span>
-                            ${logTypeBadge}
-                        </div>
-                        <p class="text-base-content/80 text-base">${logData.description}</p>
-                    </div>
-                </div>
+        <!-- Log Overview -->
+        <div class="bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg p-6 mb-6">
+            <div class="flex items-center gap-3 mb-3">
+                <span class="badge badge-lg badge-primary gap-2">
+                    <i class="fas fa-hashtag"></i>
+                    Log #${logData.id}
+                </span>
+                ${logTypeBadge}
             </div>
+            <p class="text-lg font-medium text-gray-800">${logData.description}</p>
         </div>
 
-        <!-- Information Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- User Information Card -->
-            <div class="card bg-base-100 shadow-sm border border-base-300">
-                <div class="card-body p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="flex items-center justify-center w-10 h-10 bg-success/10 rounded-lg">
-                            <i class="fas fa-user text-success"></i>
-                        </div>
-                        <h4 class="font-semibold text-base-content text-lg">User Information</h4>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center py-2 border-b border-base-300">
-                            <span class="text-sm text-base-content/60">Performed By</span>
-                            <span class="font-medium text-base-content">${logData.causer || 'System'}</span>
-                        </div>
+        <!-- Activity Details -->
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr class="hover">
+                            <td class="font-semibold text-gray-600 w-1/3">
+                                <i class="fas fa-user text-primary mr-2"></i>Performed By
+                            </td>
+                            <td class="font-medium text-gray-800">${logData.causer || 'System'}</td>
+                        </tr>
                         ${logData.email ? `
-                        <div class="flex justify-between items-center py-2 border-b border-base-300">
-                            <span class="text-sm text-base-content/60">Email</span>
-                            <span class="font-medium text-base-content">${logData.email}</span>
-                        </div>` : ''}
+                        <tr class="hover">
+                            <td class="font-semibold text-gray-600">
+                                <i class="fas fa-envelope text-info mr-2"></i>Email
+                            </td>
+                            <td class="font-medium text-gray-800">${logData.email}</td>
+                        </tr>` : ''}
                         ${logData.role ? `
-                        <div class="flex justify-between items-center py-2 border-b border-base-300">
-                            <span class="text-sm text-base-content/60">Role</span>
-                            <span class="badge badge-outline capitalize">${logData.role}</span>
-                        </div>` : ''}
+                        <tr class="hover">
+                            <td class="font-semibold text-gray-600">
+                                <i class="fas fa-shield-alt text-warning mr-2"></i>Role
+                            </td>
+                            <td>
+                                <span class="badge badge-outline capitalize">${logData.role}</span>
+                            </td>
+                        </tr>` : ''}
                         ${logData.municipality ? `
-                        <div class="flex justify-between items-center py-2">
-                            <span class="text-sm text-base-content/60">Municipality</span>
-                            <span class="font-medium text-base-content flex items-center gap-2">
-                                <i class="fas fa-map-marker-alt text-xs"></i>
-                                ${logData.municipality}
-                            </span>
-                        </div>` : ''}
-                    </div>
-                </div>
-            </div>
-
-            <!-- System Information Card -->
-            <div class="card bg-base-100 shadow-sm border border-base-300">
-                <div class="card-body p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="flex items-center justify-center w-10 h-10 bg-accent/10 rounded-lg">
-                            <i class="fas fa-clock text-accent"></i>
-                        </div>
-                        <h4 class="font-semibold text-base-content text-lg">System Information</h4>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center py-2 border-b border-base-300">
-                            <span class="text-sm text-base-content/60">Log Name</span>
-                            <span class="badge badge-ghost">${logData.log_name || 'activity'}</span>
-                        </div>
-                        <div class="flex justify-between items-center py-2 border-b border-base-300">
-                            <span class="text-sm text-base-content/60">Timestamp</span>
-                            <span class="font-medium text-base-content text-sm flex items-center gap-2">
-                                <i class="fas fa-calendar-alt text-xs"></i>
-                                ${formattedDate}
-                            </span>
-                        </div>
+                        <tr class="hover">
+                            <td class="font-semibold text-gray-600">
+                                <i class="fas fa-map-marker-alt text-error mr-2"></i>Municipality
+                            </td>
+                            <td class="font-medium text-gray-800">${logData.municipality}</td>
+                        </tr>` : ''}
+                        <tr class="hover">
+                            <td class="font-semibold text-gray-600">
+                                <i class="fas fa-clock text-accent mr-2"></i>Timestamp
+                            </td>
+                            <td class="font-medium text-gray-800">${formattedDate}</td>
+                        </tr>
                         ${logData.properties && JSON.parse(JSON.stringify(logData.properties)).ip_address ? `
-                        <div class="flex justify-between items-center py-2">
-                            <span class="text-sm text-base-content/60">IP Address</span>
-                            <span class="font-mono text-sm badge badge-outline">
-                                ${JSON.parse(JSON.stringify(logData.properties)).ip_address}
-                            </span>
-                        </div>` : ''}
-                    </div>
-                </div>
+                        <tr class="hover">
+                            <td class="font-semibold text-gray-600">
+                                <i class="fas fa-network-wired text-success mr-2"></i>IP Address
+                            </td>
+                            <td>
+                                <span class="badge badge-ghost font-mono">${JSON.parse(JSON.stringify(logData.properties)).ip_address}</span>
+                            </td>
+                        </tr>` : ''}
+                    </tbody>
+                </table>
             </div>
         </div>
-
-        <!-- Resource Information (if applicable) -->
-        ${logData.subject_type || logData.subject_id ? `
-        <div class="card bg-base-100 shadow-sm border border-base-300">
-            <div class="card-body p-6">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="flex items-center justify-center w-10 h-10 bg-warning/10 rounded-lg">
-                        <i class="fas fa-database text-warning"></i>
-                    </div>
-                    <h4 class="font-semibold text-base-content text-lg">Affected Resource</h4>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    ${logData.subject_type ? `
-                    <div class="flex flex-col p-4 bg-base-200 rounded-lg">
-                        <span class="text-xs text-base-content/60 mb-1">Resource Type</span>
-                        <span class="font-semibold text-base-content">${logData.subject_type.split('\\\\').pop()}</span>
-                    </div>` : ''}
-                    ${logData.subject_id ? `
-                    <div class="flex flex-col p-4 bg-base-200 rounded-lg">
-                        <span class="text-xs text-base-content/60 mb-1">Resource ID</span>
-                        <span class="font-semibold text-base-content font-mono">#${logData.subject_id}</span>
-                    </div>` : ''}
-                </div>
-            </div>
-        </div>` : ''}
-
-        <!-- Additional Properties (if applicable) -->
-        ${logData.properties ? `
-        <div class="collapse collapse-arrow bg-base-100 border border-base-300">
-            <input type="checkbox" />
-            <div class="collapse-title font-semibold text-base-content flex items-center gap-2">
-                <i class="fas fa-code text-info"></i>
-                Additional Details (JSON)
-            </div>
-            <div class="collapse-content">
-                <div class="mockup-code mt-2">
-                    <pre><code class="text-xs">${JSON.stringify(logData.properties, null, 2)}</code></pre>
-                </div>
-            </div>
-        </div>` : ''}
     `;
 
 
@@ -600,49 +479,6 @@ function recoverRecord(subjectId, subjectType) {
     console.log('Recover record:', {
         id: subjectId,
         type: subjectType
-    });
-}
-
-// Export Log Function (Static for now)
-function exportLog(logId) {
-    showInfoToast(`Export log #${logId} - Coming Soon!`);
-
-    // Future implementation will go here:
-    // - Format log data
-    // - Generate downloadable file (CSV/JSON)
-    // - Trigger download
-
-    console.log('Export log:', logId);
-}
-
-// Store current log data for export
-let currentLogData = null;
-
-// Export current log in modal
-function exportCurrentLog() {
-    if (currentLogData) {
-        const dataStr = JSON.stringify(currentLogData, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        const exportFileDefaultName = `log-${currentLogData.id}-${new Date().getTime()}.json`;
-
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
-
-        showSuccessToast(`Log #${currentLogData.id} exported successfully!`);
-    } else {
-        showErrorToast('No log data available to export');
-    }
-}
-
-// Copy Log ID to clipboard
-function copyLogId(logId) {
-    navigator.clipboard.writeText(logId).then(() => {
-        showSuccessToast(`Log ID ${logId} copied to clipboard!`);
-    }).catch(err => {
-        showErrorToast('Failed to copy log ID');
-        console.error('Failed to copy:', err);
     });
 }
 </script>
