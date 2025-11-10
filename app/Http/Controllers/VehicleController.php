@@ -17,9 +17,10 @@ class VehicleController extends Controller
     {
         $query = Vehicle::with(['assignedDriver', 'currentIncident']);
         
-        // Filter by municipality if user is not admin
+        // Filter by municipality if user is not superadmin
+        // SuperAdmin sees all, Admin/Staff see only their municipality
         $userMunicipality = Auth::user()->municipality;
-        if (Auth::check() && Auth::user()->role !== 'admin') {
+        if (Auth::check() && !Auth::user()->isSuperAdmin()) {
             $query->byMunicipality($userMunicipality);
         }
         
@@ -40,7 +41,7 @@ class VehicleController extends Controller
         
         // Statistics for dashboard - calculate based on current user's access
         $statsQuery = Vehicle::query();
-        if (Auth::user()->role !== 'admin') {
+        if (!Auth::user()->isSuperAdmin()) {
             $statsQuery->byMunicipality($userMunicipality);
         }
         
@@ -55,8 +56,8 @@ class VehicleController extends Controller
         // Get available incidents for vehicle assignment
         $incidentsQuery = Incident::whereIn('status', ['pending', 'active'])
                                 ->whereNull('assigned_vehicle_id');
-        
-        if (Auth::user()->role !== 'admin') {
+
+        if (!Auth::user()->isSuperAdmin()) {
             $incidentsQuery->byMunicipality($userMunicipality);
         }
         
@@ -71,7 +72,7 @@ class VehicleController extends Controller
     {
         $drivers = User::where('role', 'responder')
                       ->where('is_active', true)
-                      ->when(Auth::user()->role !== 'admin', function ($query) {
+                      ->when(!Auth::user()->isSuperAdmin(), function ($query) {
                           return $query->where('municipality', Auth::user()->municipality);
                       })
                       ->get();
@@ -106,8 +107,8 @@ class VehicleController extends Controller
     {
         $vehicle->load(['assignedDriver', 'currentIncident', 'assignedIncidents']);
         
-        // Check access permissions
-        if (Auth::user()->role !== 'admin' && Auth::user()->municipality !== $vehicle->municipality) {
+        // Check access permissions - superadmin can view all, others only their municipality
+        if (!Auth::user()->canAccessMunicipality($vehicle->municipality)) {
             abort(403, 'You do not have permission to view this vehicle.');
         }
         
@@ -123,14 +124,14 @@ class VehicleController extends Controller
     
     public function edit(Vehicle $vehicle)
     {
-        // Check access permissions
-        if (Auth::user()->role !== 'admin' && Auth::user()->municipality !== $vehicle->municipality) {
+        // Check access permissions - superadmin can edit all, others only their municipality
+        if (!Auth::user()->canAccessMunicipality($vehicle->municipality)) {
             abort(403, 'You do not have permission to edit this vehicle.');
         }
         
         $drivers = User::where('role', 'responder')
                       ->where('is_active', true)
-                      ->when(Auth::user()->role !== 'admin', function ($query) {
+                      ->when(!Auth::user()->isSuperAdmin(), function ($query) {
                           return $query->where('municipality', Auth::user()->municipality);
                       })
                       ->get();
@@ -157,8 +158,8 @@ class VehicleController extends Controller
     
     public function destroy(Vehicle $vehicle)
     {
-        // Only admin can delete vehicles
-        if (Auth::user()->role !== 'admin') {
+        // Only superadmin and admin can delete vehicles
+        if (!Auth::user()->hasAdminPrivileges()) {
             abort(403, 'You do not have permission to delete vehicles.');
         }
         
