@@ -218,7 +218,7 @@
         <div class="card bg-white shadow-sm">
                {{-- Bulk Actions --}}
             @if($requests->count() > 0)
-            <div class="card bg-white  mb-3 border-b border-base-300">
+            <div class="card bg-white border-b border-base-300">
                 <div class="card-body p-3">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                         <label class="flex items-center gap-2 cursor-pointer">
