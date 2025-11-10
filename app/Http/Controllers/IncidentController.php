@@ -20,8 +20,9 @@ class IncidentController extends Controller
     {
         $query = Incident::with(['assignedStaff', 'assignedVehicle', 'reporter']);
 
-        // Filter by municipality if user is not admin
-        if (Auth::check() && Auth::user()->role !== 'admin') {
+        // Filter by municipality if user is not superadmin
+        // SuperAdmin sees all, Admin/Staff/Responder see only their municipality
+        if (Auth::check() && !Auth::user()->isSuperAdmin()) {
             $query->byMunicipality(Auth::user()->municipality);
         }
 
@@ -51,13 +52,13 @@ class IncidentController extends Controller
     {
         $staff = User::where('role', 'staff')
             ->where('is_active', true)
-            ->when(Auth::user()->role !== 'admin', function ($query) {
+            ->when(!Auth::user()->isSuperAdmin(), function ($query) {
                 return $query->where('municipality', Auth::user()->municipality);
             })
             ->get();
 
         $vehicles = Vehicle::where('status', 'available')
-            ->when(Auth::user()->role !== 'admin', function ($query) {
+            ->when(!Auth::user()->isSuperAdmin(), function ($query) {
                 return $query->where('municipality', Auth::user()->municipality);
             })
             ->get();
@@ -109,8 +110,8 @@ class IncidentController extends Controller
     {
         $incident->load(['assignedStaff', 'assignedVehicle', 'reporter', 'victims']);
 
-        // Check access permissions
-        if (Auth::user()->role !== 'admin' && Auth::user()->municipality !== $incident->municipality) {
+        // Check access permissions - superadmin can view all, others only their municipality
+        if (!Auth::user()->canAccessMunicipality($incident->municipality)) {
             abort(403, 'You do not have permission to view this incident.');
         }
 
@@ -119,20 +120,20 @@ class IncidentController extends Controller
 
     public function edit(Incident $incident)
     {
-        // Check access permissions
-        if (Auth::user()->role !== 'admin' && Auth::user()->municipality !== $incident->municipality) {
+        // Check access permissions - superadmin can edit all, others only their municipality
+        if (!Auth::user()->canAccessMunicipality($incident->municipality)) {
             abort(403, 'You do not have permission to edit this incident.');
         }
 
         $staff = User::where('role', 'staff')
             ->where('is_active', true)
-            ->when(Auth::user()->role !== 'admin', function ($query) {
+            ->when(!Auth::user()->isSuperAdmin(), function ($query) {
                 return $query->where('municipality', Auth::user()->municipality);
             })
             ->get();
 
         $vehicles = Vehicle::where('status', 'available')
-            ->when(Auth::user()->role !== 'admin', function ($query) {
+            ->when(!Auth::user()->isSuperAdmin(), function ($query) {
                 return $query->where('municipality', Auth::user()->municipality);
             })
             ->get();
@@ -220,8 +221,8 @@ class IncidentController extends Controller
                 ->with('warning', 'This incident has already been deleted.');
         }
 
-        // Only admin can delete incidents
-        if (Auth::user()->role !== 'admin') {
+        // Only superadmin and admin can delete incidents
+        if (!Auth::user()->hasAdminPrivileges()) {
             if (request()->wantsJson() || request()->ajax()) {
                 return response()->json([
                     'success' => false,
