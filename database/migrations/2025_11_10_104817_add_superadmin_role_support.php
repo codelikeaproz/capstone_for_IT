@@ -21,16 +21,27 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Laravel's enum() creates a string column, so we just need to modify the check constraint
-        // This is a documentation migration - the actual role validation happens at application level
+        // PostgreSQL-compatible approach to add 'superadmin' role
+        // We need to use raw SQL to properly modify the CHECK constraint
 
-        // Update the role column to allow 'superadmin' value
-        Schema::table('users', function (Blueprint $table) {
-            // Drop old role check if exists and create new one
-            $table->enum('role', ['superadmin', 'admin', 'staff', 'responder', 'citizen'])
-                  ->default('staff')
-                  ->change();
-        });
+        // Step 1: Find and drop the existing CHECK constraint on role column
+        $constraintName = DB::selectOne(
+            "SELECT con.conname
+             FROM pg_constraint con
+             INNER JOIN pg_class rel ON rel.oid = con.conrelid
+             INNER JOIN pg_attribute att ON att.attrelid = con.conrelid AND att.attnum = ANY(con.conkey)
+             WHERE rel.relname = 'users' AND att.attname = 'role' AND con.contype = 'c'"
+        );
+
+        if ($constraintName) {
+            DB::statement("ALTER TABLE users DROP CONSTRAINT {$constraintName->conname}");
+        }
+
+        // Step 2: Add new CHECK constraint with 'superadmin' included
+        DB::statement(
+            "ALTER TABLE users ADD CONSTRAINT users_role_check
+             CHECK (role::text = ANY (ARRAY['superadmin'::character varying, 'admin'::character varying, 'staff'::character varying, 'responder'::character varying, 'citizen'::character varying]::text[]))"
+        );
 
         // Log the change
         \Log::info('SuperAdmin role support added to users table');
@@ -48,12 +59,15 @@ return new class extends Migration
             ->where('role', 'superadmin')
             ->update(['role' => 'admin']);
 
-        // Revert enum values
-        Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['admin', 'staff', 'responder', 'citizen'])
-                  ->default('staff')
-                  ->change();
-        });
+        // PostgreSQL-compatible rollback
+        // Drop the constraint we added
+        DB::statement("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+
+        // Restore original CHECK constraint without 'superadmin'
+        DB::statement(
+            "ALTER TABLE users ADD CONSTRAINT users_role_check
+             CHECK (role::text = ANY (ARRAY['admin'::character varying, 'staff'::character varying, 'responder'::character varying, 'citizen'::character varying]::text[]))"
+        );
 
         // Log warning
         \Log::warning('SuperAdmin role migration rolled back. All superadmin users converted to admin.');
