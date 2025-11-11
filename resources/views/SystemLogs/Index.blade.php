@@ -84,15 +84,15 @@
         <div class="card bg-white shadow-lg">
             <div class="card-body p-0">
                 <div class="px-4 py-6 border-b border-gray-200">
-                    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-                        <div>
+                    <div class="flex flex-row justify-between gap-6">
+                        <div class="flex-shrink-0">
                             <h2 class="text-xl font-semibold text-gray-800">Activity Logs</h2>
-                            <p class="text-sm text-gray-500 mt-1 md:mt-2">
+                            <p class="text-sm text-gray-500 mt-2">
                                 Showing {{ $logs->firstItem() ?? 0 }} to {{ $logs->lastItem() ?? 0 }} of {{ number_format($logs->total()) }} results
                             </p>
                         </div>
-                        <form method="GET" action="{{ route('system.logs') }}" class="w-full md:w-auto">
-                            <div class="flex flex-col md:flex-row md:justify-end md:items-end gap-3">
+                        <form method="GET" action="{{ route('system.logs') }}" class="flex-shrink-0 lg:ml-auto">
+                            <div class="flex flex-wrap items-end gap-3">
                                 {{-- Search Input --}}
                                 <div class="form-control">
                                     <label for="search" class="label">
@@ -138,7 +138,7 @@
 
                             {{-- Active Filters Display --}}
                             @if($search || $logType)
-                            <div class="flex items-center justify-end gap-2 flex-wrap pt-2">
+                            <div class="flex items-center gap-2 flex-wrap mt-3">
                                 <span class="text-sm font-medium text-gray-700">Active filters:</span>
                                 @if($search)
                                     <span class="badge badge-primary gap-1">
@@ -154,6 +154,7 @@
                             @endif
                         </form>
                     </div>
+
                 </div>
                 </div>
 
