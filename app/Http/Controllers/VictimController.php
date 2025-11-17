@@ -15,7 +15,7 @@ class VictimController extends Controller
         $query = Victim::with('incident');
 
         // Filter by municipality if user is not admin
-        if (Auth::check() && Auth::user()->role !== 'admin') {
+        if (Auth::check() && !Auth::user()->isSuperAdmin()) {
             $query->whereHas('incident', function ($q) {
                 $q->where('municipality', Auth::user()->municipality);
             });
@@ -33,7 +33,7 @@ class VictimController extends Controller
         $victims = $query->latest()->paginate(15);
 
         // Get incidents for filter dropdown
-        $incidents = Incident::when(Auth::user()->role !== 'admin', function ($q) {
+        $incidents = Incident::when(!Auth::user()->isSuperAdmin(), function ($q) {
                         return $q->where('municipality', Auth::user()->municipality);
                      })
                      ->latest()
@@ -52,12 +52,12 @@ class VictimController extends Controller
             $incident = Incident::find($incidentId);
 
             // Check access permissions
-            if ($incident && Auth::user()->role !== 'admin' && Auth::user()->municipality !== $incident->municipality) {
+            if ($incident && !Auth::user()->isSuperAdmin() && Auth::user()->municipality !== $incident->municipality) {
                 abort(403, 'You do not have permission to add victims to this incident.');
             }
         }
 
-        $incidents = Incident::when(Auth::user()->role !== 'admin', function ($q) {
+        $incidents = Incident::when(!Auth::user()->isSuperAdmin(), function ($q) {
                         return $q->where('municipality', Auth::user()->municipality);
                      })
                      ->whereIn('status', ['pending', 'active'])
@@ -100,7 +100,7 @@ class VictimController extends Controller
 
         // Check access permissions
         $incident = Incident::find($validated['incident_id']);
-        if (Auth::user()->role !== 'admin' && Auth::user()->municipality !== $incident->municipality) {
+        if (!Auth::user()->isSuperAdmin() && Auth::user()->municipality !== $incident->municipality) {
             abort(403, 'You do not have permission to add victims to this incident.');
         }
 
@@ -130,7 +130,7 @@ class VictimController extends Controller
         $victim->load('incident');
 
         // Check access permissions
-        if (Auth::user()->role !== 'admin' && Auth::user()->municipality !== $victim->incident->municipality) {
+        if (!Auth::user()->isSuperAdmin() && Auth::user()->municipality !== $victim->incident->municipality) {
             abort(403, 'You do not have permission to view this victim record.');
         }
 
@@ -142,11 +142,11 @@ class VictimController extends Controller
         $victim->load('incident');
 
         // Check access permissions
-        if (Auth::user()->role !== 'admin' && Auth::user()->municipality !== $victim->incident->municipality) {
+        if (!Auth::user()->isSuperAdmin() && Auth::user()->municipality !== $victim->incident->municipality) {
             abort(403, 'You do not have permission to edit this victim record.');
         }
 
-        $incidents = Incident::when(Auth::user()->role !== 'admin', function ($q) {
+        $incidents = Incident::when(!Auth::user()->isSuperAdmin(), function ($q) {
                         return $q->where('municipality', Auth::user()->municipality);
                      })
                      ->latest()
@@ -160,7 +160,7 @@ class VictimController extends Controller
         $victim->load('incident');
 
         // Check access permissions
-        if (Auth::user()->role !== 'admin' && Auth::user()->municipality !== $victim->incident->municipality) {
+        if (!Auth::user()->isSuperAdmin() && Auth::user()->municipality !== $victim->incident->municipality) {
             abort(403, 'You do not have permission to update this victim record.');
         }
 
@@ -211,7 +211,7 @@ class VictimController extends Controller
         $victim->load('incident');
 
         // Only admin can delete victim records
-        if (Auth::user()->role !== 'admin') {
+        if (!Auth::user()->isSuperAdmin()) {
             abort(403, 'You do not have permission to delete victim records.');
         }
 

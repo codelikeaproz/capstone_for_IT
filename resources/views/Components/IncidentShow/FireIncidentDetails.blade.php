@@ -1,5 +1,5 @@
 {{-- Fire Incident Specific Details --}}
-@if($incident->incident_type === 'fire')
+@if($incident->incident_type === 'fire_incident')
     <div class="card bg-base-100 shadow-lg">
         <div class="card-body">
             <h2 class="card-title text-xl mb-4">
@@ -27,30 +27,6 @@
                     </div>
                 @endif
 
-                @if($incident->buildings_affected)
-                    <div>
-                        <label class="label font-semibold">Buildings Affected</label>
-                        <div class="text-lg font-bold text-orange-600">{{ $incident->buildings_affected }} Building(s)</div>
-                    </div>
-                @endif
-
-                @if($incident->evacuation_required)
-                    <div>
-                        <label class="label font-semibold">Evacuation Status</label>
-                        <div class="badge badge-lg badge-error">
-                            <i class="fas fa-exclamation-triangle mr-1"></i>
-                            Evacuation Required
-                        </div>
-                    </div>
-                @endif
-
-                @if($incident->evacuated_count)
-                    <div>
-                        <label class="label font-semibold">People Evacuated</label>
-                        <div class="text-lg font-bold text-blue-600">{{ $incident->evacuated_count }} Person(s)</div>
-                    </div>
-                @endif
-
                 @if($incident->fire_cause)
                     <div class="md:col-span-2">
                         <label class="label font-semibold">Suspected Fire Cause</label>
@@ -62,7 +38,7 @@
             </div>
 
             {{-- Critical Fire Alert --}}
-            @if($incident->fire_spread_level === 'widespread' || $incident->buildings_affected > 3)
+            @if($incident->fire_spread_level === 'widespread')
                 <div class="alert alert-error mt-4">
                     <i class="fas fa-fire"></i>
                     <span class="font-semibold">Major Fire Incident - Request Additional Fire Units</span>

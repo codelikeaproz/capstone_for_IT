@@ -51,27 +51,17 @@ class Incident extends Model
         'driver_information',
         // Medical Emergency specific
         'medical_emergency_type',
-        'ambulance_requested',
-        'patient_count',
         'patient_symptoms',
         // Fire Incident specific
         'building_type',
         'fire_spread_level',
-        'evacuation_required',
-        'evacuated_count',
         'fire_cause',
-        'buildings_affected',
         // Natural Disaster specific
         'disaster_type',
-        'affected_area_size',
-        'shelter_needed',
-        'families_affected',
-        'structures_damaged',
-        'infrastructure_damage',
+        // 'affected_baragay', // plan is to create a function to calculate the affected baragay based on the disaster type
+        'disaster_description',  //--add this field to the database and frontend to describe the disaster
         // Criminal Activity specific
         'crime_type',
-        'police_notified',
-        'case_number',
         'suspect_description',
     ];
 
@@ -93,14 +83,7 @@ class Incident extends Model
         'vehicle_count' => 'integer',
         'patient_count' => 'integer',
         'evacuated_count' => 'integer',
-        'buildings_affected' => 'integer',
-        'families_affected' => 'integer',
-        'structures_damaged' => 'integer',
-        'affected_area_size' => 'decimal:2',
         'ambulance_requested' => 'boolean',
-        'evacuation_required' => 'boolean',
-        'shelter_needed' => 'boolean',
-        'police_notified' => 'boolean',
     ];
 
     protected $dates = [
@@ -293,6 +276,6 @@ class Incident extends Model
     }
 
 
-    
+
 
 }

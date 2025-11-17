@@ -464,42 +464,6 @@
                             </select>
                         </div>
 
-                        <div class="form-control">
-                            <label class="label cursor-pointer justify-start gap-3">
-                                <input type="checkbox"
-                                       name="evacuation_required"
-                                       value="1"
-                                       class="checkbox checkbox-warning"
-                                       {{ old('evacuation_required', $incident->evacuation_required) ? 'checked' : '' }}>
-                                <span class="label-text font-semibold text-gray-700">Evacuation Required</span>
-                            </label>
-                        </div>
-
-                        <div class="form-control">
-                            <label for="evacuated_count" class="label">
-                                <span class="label-text font-semibold text-gray-700">People Evacuated</span>
-                            </label>
-                            <input type="number"
-                                   name="evacuated_count"
-                                   id="evacuated_count"
-                                   min="0"
-                                   class="input input-bordered w-full focus:outline-primary min-h-[44px]"
-                                   placeholder="0"
-                                   value="{{ old('evacuated_count', $incident->evacuated_count) }}">
-                        </div>
-
-                        <div class="form-control">
-                            <label for="buildings_affected" class="label">
-                                <span class="label-text font-semibold text-gray-700">Buildings Affected</span>
-                            </label>
-                            <input type="number"
-                                   name="buildings_affected"
-                                   id="buildings_affected"
-                                   min="1"
-                                   class="input input-bordered w-full focus:outline-primary min-h-[44px]"
-                                   placeholder="1"
-                                   value="{{ old('buildings_affected', $incident->buildings_affected) }}">
-                        </div>
                     </div>
 
                     <div class="form-control mt-6">
@@ -546,67 +510,17 @@
                             </select>
                         </div>
 
-                        <div class="form-control">
-                            <label for="affected_area_size" class="label">
-                                <span class="label-text font-semibold text-gray-700">Affected Area (km²)</span>
-                            </label>
-                            <input type="number"
-                                   step="0.01"
-                                   name="affected_area_size"
-                                   id="affected_area_size"
-                                   min="0"
-                                   class="input input-bordered w-full focus:outline-primary min-h-[44px]"
-                                   placeholder="5.5"
-                                   value="{{ old('affected_area_size', $incident->affected_area_size) }}">
-                        </div>
-
-                        <div class="form-control">
-                            <label class="label cursor-pointer justify-start gap-3">
-                                <input type="checkbox"
-                                       name="shelter_needed"
-                                       value="1"
-                                       class="checkbox checkbox-info"
-                                       {{ old('shelter_needed', $incident->shelter_needed) ? 'checked' : '' }}>
-                                <span class="label-text font-semibold text-gray-700">Shelter Required</span>
-                            </label>
-                        </div>
-
-                        <div class="form-control">
-                            <label for="families_affected" class="label">
-                                <span class="label-text font-semibold text-gray-700">Families Affected</span>
-                            </label>
-                            <input type="number"
-                                   name="families_affected"
-                                   id="families_affected"
-                                   min="0"
-                                   class="input input-bordered w-full focus:outline-primary min-h-[44px]"
-                                   placeholder="0"
-                                   value="{{ old('families_affected', $incident->families_affected) }}">
-                        </div>
-
                         <div class="form-control md:col-span-2">
-                            <label for="structures_damaged" class="label">
-                                <span class="label-text font-semibold text-gray-700">Structures Damaged</span>
+                            <label for="disaster_description" class="label">
+                                <span class="label-text font-semibold text-gray-700">Disaster Description</span>
+                                <span class="label-text-alt text-base-content/60">Provide detailed information about the disaster</span>
                             </label>
-                            <input type="number"
-                                   name="structures_damaged"
-                                   id="structures_damaged"
-                                   min="0"
-                                   class="input input-bordered w-full focus:outline-primary min-h-[44px]"
-                                   placeholder="0"
-                                   value="{{ old('structures_damaged', $incident->structures_damaged) }}">
+                            <textarea name="disaster_description"
+                                      id="disaster_description"
+                                      rows="4"
+                                      class="textarea textarea-bordered w-full focus:outline-primary"
+                                      placeholder="Describe the disaster impact, affected areas, damage to infrastructure, evacuation status, and any other relevant information...">{{ old('disaster_description', $incident->disaster_description) }}</textarea>
                         </div>
-                    </div>
-
-                    <div class="form-control mt-6">
-                        <label for="infrastructure_damage" class="label">
-                            <span class="label-text font-semibold text-gray-700">Infrastructure Damage</span>
-                        </label>
-                        <textarea name="infrastructure_damage"
-                                  id="infrastructure_damage"
-                                  rows="3"
-                                  class="textarea textarea-bordered w-full focus:outline-primary"
-                                  placeholder="Describe damage to roads, bridges, utilities...">{{ old('infrastructure_damage', $incident->infrastructure_damage) }}</textarea>
                     </div>
                 </div>
             </section>
@@ -639,28 +553,6 @@
                             </select>
                         </div>
 
-                        <div class="form-control">
-                            <label class="label cursor-pointer justify-start gap-3">
-                                <input type="checkbox"
-                                       name="police_notified"
-                                       value="1"
-                                       class="checkbox checkbox-error"
-                                       {{ old('police_notified', $incident->police_notified) ? 'checked' : '' }}>
-                                <span class="label-text font-semibold text-gray-700">Police Notified</span>
-                            </label>
-                        </div>
-
-                        <div class="form-control md:col-span-2">
-                            <label for="case_number" class="label">
-                                <span class="label-text font-semibold text-gray-700">Police Case Number</span>
-                            </label>
-                            <input type="text"
-                                   name="case_number"
-                                   id="case_number"
-                                   class="input input-bordered w-full focus:outline-primary min-h-[44px]"
-                                   placeholder="e.g., 2025-001234"
-                                   value="{{ old('case_number', $incident->case_number) }}">
-                        </div>
                     </div>
 
                     <div class="form-control mt-6">
@@ -695,17 +587,31 @@
                             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 @foreach($incident->photos as $index => $photo)
                                     <div class="relative group bg-gray-100 rounded-lg overflow-hidden" style="aspect-ratio: 1/1;">
+                                        {{-- Photo Image --}}
                                         <img src="{{ asset('storage/' . $photo) }}"
                                              alt="Incident photo {{ $index + 1 }}"
-                                             class="absolute inset-0 w-full h-full object-cover"
+                                             class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                             style="z-index: 1;"
                                              loading="lazy"
-                                             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23fee2e2%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-size=%2210%22 fill=%22%23dc2626%22%3EFailed%3C/text%3E%3C/svg%3E';">
-                                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg flex items-center justify-center">
+                                             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23fee2e2%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-size=%2210%22 fill=%22%23dc2626%22%3EImage Failed%3C/text%3E%3C/svg%3E';">
+
+                                        {{-- Hover Overlay --}}
+                                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none transition-all"
+                                             style="z-index: 2; background-color: rgba(0, 0, 0, 0);"
+                                             onmouseenter="this.style.backgroundColor='rgba(0, 0, 0, 0.4)'"
+                                             onmouseleave="this.style.backgroundColor='rgba(0, 0, 0, 0)'">
                                             <a href="{{ asset('storage/' . $photo) }}"
                                                target="_blank"
-                                               class="opacity-0 group-hover:opacity-100 transition-opacity btn btn-sm btn-circle btn-info z-10">
-                                                <i class="fas fa-expand"></i>
+                                               class="opacity-0 group-hover:opacity-100 transition-opacity btn btn-sm btn-circle btn-info pointer-events-auto"
+                                               onclick="event.stopPropagation();"
+                                               title="View full size">
+                                                <i class="fas fa-search-plus"></i>
                                             </a>
+                                        </div>
+
+                                        {{-- Photo Number Badge --}}
+                                        <div class="absolute top-2 left-2 badge badge-sm badge-neutral" style="z-index: 10;">
+                                            {{ $index + 1 }}
                                         </div>
                                     </div>
                                 @endforeach

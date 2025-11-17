@@ -17,12 +17,17 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             abort(403, 'Only administrators can access user management.');
         }
 
         $query = User::query();
+
+        // Automatically filter by municipality for Admin users (not SuperAdmin)
+        if (!Auth::user()->isSuperAdmin()) {
+            $query->byMunicipality(Auth::user()->municipality);
+        }
 
         // Search functionality
         if ($request->filled('search')) {
@@ -40,18 +45,9 @@ class UserController extends Controller
             $query->where('role', $request->role);
         }
 
-        // Filter by municipality
-        if ($request->filled('municipality')) {
+        // Filter by municipality (SuperAdmin only)
+        if ($request->filled('municipality') && Auth::user()->isSuperAdmin()) {
             $query->where('municipality', $request->municipality);
-        }
-
-        // Filter by status
-        if ($request->filled('status')) {
-            if ($request->status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($request->status === 'inactive') {
-                $query->where('is_active', false);
-            }
         }
 
         // Filter by email verification
@@ -70,15 +66,36 @@ class UserController extends Controller
 
         $users = $query->paginate(15)->withQueryString();
 
-        // Get statistics
+        // Get statistics (scoped by municipality for Admin users)
         $stats = [
-            'total' => User::count(),
-            'active' => User::where('is_active', true)->count(),
-            'inactive' => User::where('is_active', false)->count(),
-            'admins' => User::where('role', 'admin')->count(),
-            'staff' => User::where('role', 'staff')->count(),
-            'responders' => User::where('role', 'responder')->count(),
-            'citizens' => User::where('role', 'citizen')->count(),
+            'total' => User::when(!Auth::user()->isSuperAdmin(), function ($q) {
+                return $q->byMunicipality(Auth::user()->municipality);
+            })->count(),
+            'active' => User::where('is_active', true)
+                ->when(!Auth::user()->isSuperAdmin(), function ($q) {
+                    return $q->byMunicipality(Auth::user()->municipality);
+                })->count(),
+            'inactive' => User::where('is_active', false)
+                ->when(!Auth::user()->isSuperAdmin(), function ($q) {
+                    return $q->byMunicipality(Auth::user()->municipality);
+                })->count(),
+            'superadmins' => User::where('role', 'superadmin')->count(), // System-wide stat
+            'admins' => User::where('role', 'admin')
+                ->when(!Auth::user()->isSuperAdmin(), function ($q) {
+                    return $q->byMunicipality(Auth::user()->municipality);
+                })->count(),
+            'staff' => User::where('role', 'staff')
+                ->when(!Auth::user()->isSuperAdmin(), function ($q) {
+                    return $q->byMunicipality(Auth::user()->municipality);
+                })->count(),
+            'responders' => User::where('role', 'responder')
+                ->when(!Auth::user()->isSuperAdmin(), function ($q) {
+                    return $q->byMunicipality(Auth::user()->municipality);
+                })->count(),
+            'citizens' => User::where('role', 'citizen')
+                ->when(!Auth::user()->isSuperAdmin(), function ($q) {
+                    return $q->byMunicipality(Auth::user()->municipality);
+                })->count(),
         ];
 
         return view('User.Management.Index', compact('users', 'stats'));
@@ -89,13 +106,16 @@ class UserController extends Controller
      */
     public function create()
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             abort(403, 'Only administrators can create users.');
         }
 
         $municipalities = LocationService::getMunicipalitiesForSelect();
-        $roles = ['admin', 'staff', 'responder', 'citizen'];
+        // Only superadmin can create/assign superadmin role
+        $roles = Auth::user()->isSuperAdmin()
+            ? ['superadmin', 'admin', 'staff', 'responder', 'citizen']
+            : ['admin', 'staff', 'responder', 'citizen'];
 
         return view('User.Management.Create', compact('municipalities', 'roles'));
     }
@@ -105,8 +125,8 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             abort(403, 'Only administrators can create users.');
         }
 
@@ -115,7 +135,13 @@ class UserController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:admin,staff,responder,citizen',
+            'role' => [
+                'required',
+                Rule::in(Auth::user()->isSuperAdmin()
+                    ? ['superadmin', 'admin', 'staff', 'responder', 'citizen']
+                    : ['admin', 'staff', 'responder', 'citizen']
+                )
+            ],
             'municipality' => 'required|string|max:255',
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
@@ -147,9 +173,14 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             abort(403, 'Only administrators can view user details.');
+        }
+
+        // Check municipality access for Admin users
+        if (!Auth::user()->canAccessMunicipality($user->municipality)) {
+            abort(403, 'You do not have permission to view this user.');
         }
 
         // Load relationships
@@ -175,13 +206,21 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             abort(403, 'Only administrators can edit users.');
         }
 
+        // Check municipality access for Admin users
+        if (!Auth::user()->canAccessMunicipality($user->municipality)) {
+            abort(403, 'You do not have permission to edit this user.');
+        }
+
         $municipalities = LocationService::getMunicipalitiesForSelect();
-        $roles = ['admin', 'staff', 'responder', 'citizen'];
+        // Only superadmin can create/assign superadmin role
+        $roles = Auth::user()->isSuperAdmin()
+            ? ['superadmin', 'admin', 'staff', 'responder', 'citizen']
+            : ['admin', 'staff', 'responder', 'citizen'];
 
         return view('User.Management.Edit', compact('user', 'municipalities', 'roles'));
     }
@@ -191,9 +230,14 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             abort(403, 'Only administrators can update users.');
+        }
+
+        // Check municipality access for Admin users
+        if (!Auth::user()->canAccessMunicipality($user->municipality)) {
+            abort(403, 'You do not have permission to update this user.');
         }
 
         $validated = $request->validate([
@@ -201,7 +245,13 @@ class UserController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'required|in:admin,staff,responder,citizen',
+            'role' => [
+                'required',
+                Rule::in(Auth::user()->isSuperAdmin()
+                    ? ['superadmin', 'admin', 'staff', 'responder', 'citizen']
+                    : ['admin', 'staff', 'responder', 'citizen']
+                )
+            ],
             'municipality' => 'required|string|max:255',
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
@@ -237,12 +287,21 @@ class UserController extends Controller
      */
     public function destroy(Request $request, User $user)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
             abort(403, 'Only administrators can delete users.');
+        }
+
+        // Check municipality access for Admin users
+        if (!Auth::user()->canAccessMunicipality($user->municipality)) {
+            $errorMessage = 'You do not have permission to delete this user.';
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $errorMessage], 403);
+            }
+            abort(403, $errorMessage);
         }
 
         // Prevent deleting own account
@@ -254,8 +313,8 @@ class UserController extends Controller
             return back()->with('error', $errorMessage);
         }
 
-        // Prevent deleting last admin
-        if ($user->isAdmin() && User::where('role', 'admin')->count() <= 1) {
+        // Prevent deleting last admin (superadmin or admin)
+        if ($user->hasAdminPrivileges() && User::whereIn('role', ['superadmin', 'admin'])->count() <= 1) {
             $errorMessage = 'Cannot delete the last administrator account.';
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['success' => false, 'message' => $errorMessage], 400);
@@ -314,13 +373,24 @@ class UserController extends Controller
      */
     public function assignRole(Request $request, User $user)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        // Check municipality access for Admin users
+        if (!Auth::user()->canAccessMunicipality($user->municipality)) {
+            return response()->json(['error' => 'You do not have permission to modify this user'], 403);
+        }
+
         $validated = $request->validate([
-            'role' => 'required|in:admin,staff,responder,citizen',
+            'role' => [
+                'required',
+                Rule::in(Auth::user()->isSuperAdmin()
+                    ? ['superadmin', 'admin', 'staff', 'responder', 'citizen']
+                    : ['admin', 'staff', 'responder', 'citizen']
+                )
+            ],
         ]);
 
         $oldRole = $user->role;
@@ -347,9 +417,14 @@ class UserController extends Controller
      */
     public function assignMunicipality(Request $request, User $user)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Check municipality access for Admin users
+        if (!Auth::user()->canAccessMunicipality($user->municipality)) {
+            return response()->json(['error' => 'You do not have permission to modify this user'], 403);
         }
 
         $validated = $request->validate([
@@ -380,9 +455,14 @@ class UserController extends Controller
      */
     public function toggleStatus(User $user)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Check municipality access for Admin users
+        if (!Auth::user()->canAccessMunicipality($user->municipality)) {
+            return response()->json(['error' => 'You do not have permission to modify this user'], 403);
         }
 
         // Prevent deactivating own account
@@ -390,8 +470,8 @@ class UserController extends Controller
             return response()->json(['error' => 'You cannot deactivate your own account.'], 400);
         }
 
-        // Prevent deactivating last admin
-        if ($user->isAdmin() && $user->is_active && User::where('role', 'admin')->where('is_active', true)->count() <= 1) {
+        // Prevent deactivating last active admin (superadmin or admin)
+        if ($user->hasAdminPrivileges() && $user->is_active && User::whereIn('role', ['superadmin', 'admin'])->where('is_active', true)->count() <= 1) {
             return response()->json(['error' => 'Cannot deactivate the last active administrator.'], 400);
         }
 
@@ -420,9 +500,14 @@ class UserController extends Controller
      */
     public function resetPassword(Request $request, User $user)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Check municipality access for Admin users
+        if (!Auth::user()->canAccessMunicipality($user->municipality)) {
+            return response()->json(['error' => 'You do not have permission to modify this user'], 403);
         }
 
         $validated = $request->validate([
@@ -451,9 +536,14 @@ class UserController extends Controller
      */
     public function unlockAccount(User $user)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Check municipality access for Admin users
+        if (!Auth::user()->canAccessMunicipality($user->municipality)) {
+            return response()->json(['error' => 'You do not have permission to modify this user'], 403);
         }
 
         $user->update([
@@ -477,9 +567,14 @@ class UserController extends Controller
      */
     public function verifyEmail(User $user)
     {
-        // Check if user is admin
-        if (!Auth::user()->isAdmin()) {
+        // Check if user has admin privileges (superadmin or admin)
+        if (!Auth::user()->hasAdminPrivileges()) {
             return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Check municipality access for Admin users
+        if (!Auth::user()->canAccessMunicipality($user->municipality)) {
+            return response()->json(['error' => 'You do not have permission to modify this user'], 403);
         }
 
         if ($user->hasVerifiedEmail()) {

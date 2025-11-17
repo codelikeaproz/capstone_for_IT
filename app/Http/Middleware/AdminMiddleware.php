@@ -11,7 +11,8 @@ class AdminMiddleware
 {
     /**
      * Handle an incoming request.
-     * Only allows access to users with admin role.
+     * Allows access to users with admin or superadmin role.
+     * (Both admin and superadmin can access admin pages)
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -19,7 +20,8 @@ class AdminMiddleware
             return redirect()->route('login')->with('error', 'Please login to access this page.');
         }
 
-        if (!Auth::user()->isAdmin()) {
+        // Allow both superadmin and admin roles
+        if (!Auth::user()->hasAdminPrivileges()) {
             abort(403, 'Only administrators can access this page.');
         }
 

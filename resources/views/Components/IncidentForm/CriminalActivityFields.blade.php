@@ -27,46 +27,6 @@
             @enderror
         </div>
 
-        <!-- Police Notified -->
-        <div class="form-control">
-            <label class="label cursor-pointer justify-start gap-3 bg-base-200 p-4 rounded-box">
-                <input
-                    type="checkbox"
-                    name="police_notified"
-                    id="police_notified"
-                    value="1"
-                    class="checkbox checkbox-primary"
-                    {{ old('police_notified') ? 'checked' : '' }}
-                    onchange="togglePoliceFields(this.checked)"
-                >
-                <div>
-                    <span class="label-text font-medium block">Police Notified</span>
-                    <span class="label-text-alt text-base-content/60">Check if police have been contacted</span>
-                </div>
-            </label>
-        </div>
-
-        <!-- Case Number -->
-        <div class="form-control" id="case-number-container" style="display: {{ old('police_notified') ? 'block' : 'none' }}">
-            <label class="label">
-                <span class="label-text font-medium">Police Case Number</span>
-                <span class="label-text-alt text-base-content/60">If available</span>
-            </label>
-            <input
-                type="text"
-                name="case_number"
-                id="case_number"
-                class="input input-bordered w-full focus:outline-primary @error('case_number') input-error @enderror"
-                placeholder="e.g., 2025-001234"
-                value="{{ old('case_number') }}"
-            >
-            @error('case_number')
-                <label class="label">
-                    <span class="label-text-alt text-error">{{ $message }}</span>
-                </label>
-            @enderror
-        </div>
-
         <!-- Suspect Description -->
         <div class="form-control md:col-span-2">
             <label class="label">
@@ -137,23 +97,4 @@
     </div>
 </div>
 
-@push('scripts')
-<script>
-function togglePoliceFields(isNotified) {
-    const caseNumberContainer = document.getElementById('case-number-container');
-
-    if (caseNumberContainer) {
-        caseNumberContainer.style.display = isNotified ? 'block' : 'none';
-    }
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const policeNotified = document.getElementById('police_notified');
-    if (policeNotified) {
-        togglePoliceFields(policeNotified.checked);
-    }
-});
-</script>
-@endpush
 
