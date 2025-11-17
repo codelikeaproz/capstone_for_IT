@@ -287,10 +287,11 @@ Inputs can be used with `validator` class to have validation styles. [See Valida
       maxlength="30"
       title="Only letters, numbers or dash"
     />
+</label>
   <p class="validator-hint hidden">Must be 3 to 30 characters
     <br />containing only letters, numbers or dash
   </p>
-</label>
+
 
 
 

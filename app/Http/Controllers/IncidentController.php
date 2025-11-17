@@ -27,23 +27,26 @@ class IncidentController extends Controller
         }
 
         // Apply filters
-        if ($request->filled('municipality')) {
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('incident_number', 'LIKE', "%{$search}%")
+                  ->orWhere('location', 'LIKE', "%{$search}%")
+                  ->orWhere('description', 'LIKE', "%{$search}%")
+                  ->orWhere('incident_type', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // SuperAdmin can filter by municipality
+        if ($request->filled('municipality') && Auth::user()->isSuperAdmin()) {
             $query->byMunicipality($request->municipality);
-        }
-
-        if ($request->filled('severity')) {
-            $query->bySeverity($request->severity);
-        }
-
-        if ($request->filled('status')) {
-            $query->byStatus($request->status);
         }
 
         if ($request->filled('incident_type')) {
             $query->where('incident_type', $request->incident_type);
         }
 
-        $incidents = $query->latest('incident_date')->paginate(15);
+        $incidents = $query->latest('incident_date')->paginate(15)->withQueryString();
 
         return view('Incident.index', compact('incidents'));
     }

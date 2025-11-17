@@ -45,18 +45,9 @@ class UserController extends Controller
             $query->where('role', $request->role);
         }
 
-        // Filter by municipality
-        if ($request->filled('municipality')) {
+        // Filter by municipality (SuperAdmin only)
+        if ($request->filled('municipality') && Auth::user()->isSuperAdmin()) {
             $query->where('municipality', $request->municipality);
-        }
-
-        // Filter by status
-        if ($request->filled('status')) {
-            if ($request->status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($request->status === 'inactive') {
-                $query->where('is_active', false);
-            }
         }
 
         // Filter by email verification

@@ -22,7 +22,7 @@ The SuperAdmin feature introduces a hierarchical role system that fixes data iso
 │ ADMIN (Municipality-level access)                       │
 │ • Access only to their assigned municipality            │
 │ • Manage users, incidents, vehicles within municipality │
-│ • Cannot create superadmin users                        │
+│ • Cannot create superadmin users                       │
 └─────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────┐

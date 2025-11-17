@@ -15,23 +15,6 @@
                     </div>
                 @endif
 
-                @if($incident->police_notified)
-                    <div>
-                        <label class="label font-semibold">Police Status</label>
-                        <div class="badge badge-lg badge-success">
-                            <i class="fas fa-check-circle mr-1"></i>
-                            Police Notified
-                        </div>
-                    </div>
-                @endif
-
-                @if($incident->case_number)
-                    <div>
-                        <label class="label font-semibold">Police Case Number</label>
-                        <div class="font-mono text-lg text-blue-600 font-semibold">{{ $incident->case_number }}</div>
-                    </div>
-                @endif
-
                 @if($incident->suspect_description)
                     <div class="md:col-span-2">
                         <label class="label font-semibold">Suspect Description</label>

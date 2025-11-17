@@ -66,25 +66,22 @@
                                 </div>
 
                                 <div class="grid grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
-                                    <div>
-                                        <span class="text-gray-600">Age:</span>
-                                        <span class="font-semibold">{{ $victim->age }} years</span>
-                                        @if($victim->age_category)
-                                            <span class="badge badge-xs badge-ghost ml-1">{{ ucfirst($victim->age_category) }}</span>
-                                        @endif
-                                    </div>
+                                    @if($victim->birth_date)
+                                        <div>
+                                            <span class="text-gray-600">Birth Date:</span>
+                                            <span class="font-semibold">{{ $victim->formatted_birth_date }}</span>
+                                        </div>
+
+                                        <div>
+                                            <span class="text-gray-600">Age:</span>
+                                            <span class="font-semibold">{{ $victim->age }} years</span>
+                                        </div>
+                                    @endif
 
                                     <div>
                                         <span class="text-gray-600">Gender:</span>
                                         <span class="font-semibold">{{ ucfirst($victim->gender) }}</span>
                                     </div>
-
-                                    @if($victim->blood_type)
-                                        <div>
-                                            <span class="text-gray-600">Blood Type:</span>
-                                            <span class="font-semibold text-red-600">{{ $victim->blood_type }}</span>
-                                        </div>
-                                    @endif
 
                                     @if($victim->contact_number)
                                         <div>
@@ -111,94 +108,17 @@
                             </div>
                         </div>
 
-                        {{-- Pregnancy Information --}}
+                        {{-- Maternity Information --}}
                         @if($victim->is_pregnant)
                             <div class="mt-3 p-3 bg-purple-50 border border-purple-200 rounded">
                                 <h4 class="font-semibold text-purple-800 mb-2">
-                                    <i class="fas fa-baby mr-1"></i>Pregnancy Information
+                                    <i class="fas fa-baby mr-1"></i>Maternity Information
                                 </h4>
-                                <div class="grid grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
-                                    @if($victim->pregnancy_trimester)
-                                        <div>
-                                            <span class="text-gray-600">Trimester:</span>
-                                            <span class="font-semibold">{{ ucfirst($victim->pregnancy_trimester) }}</span>
-                                        </div>
-                                    @endif
-
-                                    @if($victim->expected_delivery_date)
-                                        <div>
-                                            <span class="text-gray-600">Expected Delivery:</span>
-                                            <span class="font-semibold">{{ \Carbon\Carbon::parse($victim->expected_delivery_date)->format('M d, Y') }}</span>
-                                        </div>
-                                    @endif
-                                </div>
-
-                                @if($victim->pregnancy_complications)
-                                    <div class="mt-2">
-                                        <span class="text-gray-600 text-sm">Complications:</span>
-                                        <div class="text-sm text-red-600 font-semibold">{{ $victim->pregnancy_complications }}</div>
-                                    </div>
-                                @endif
-                            </div>
-                        @endif
-
-                        {{-- Vital Signs (for medical emergencies) --}}
-                        @if($incident->incident_type === 'medical_emergency' &&
-                            ($victim->blood_pressure || $victim->heart_rate || $victim->temperature || $victim->respiratory_rate))
-                            <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                                <h4 class="font-semibold text-blue-800 mb-2">
-                                    <i class="fas fa-heartbeat mr-1"></i>Vital Signs
-                                </h4>
-                                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-                                    @if($victim->blood_pressure)
-                                        <div class="flex items-center gap-2">
-                                            <i class="fas fa-tint text-red-500"></i>
-                                            <div>
-                                                <div class="text-xs text-gray-600">Blood Pressure</div>
-                                                <div class="font-bold">{{ $victim->blood_pressure }}</div>
-                                            </div>
-                                        </div>
-                                    @endif
-
-                                    @if($victim->heart_rate)
-                                        <div class="flex items-center gap-2">
-                                            <i class="fas fa-heartbeat text-pink-500"></i>
-                                            <div>
-                                                <div class="text-xs text-gray-600">Heart Rate</div>
-                                                <div class="font-bold">{{ $victim->heart_rate }} bpm</div>
-                                            </div>
-                                        </div>
-                                    @endif
-
-                                    @if($victim->temperature)
-                                        <div class="flex items-center gap-2">
-                                            <i class="fas fa-thermometer-half text-orange-500"></i>
-                                            <div>
-                                                <div class="text-xs text-gray-600">Temperature</div>
-                                                <div class="font-bold">{{ $victim->temperature }}°C</div>
-                                            </div>
-                                        </div>
-                                    @endif
-
-                                    @if($victim->respiratory_rate)
-                                        <div class="flex items-center gap-2">
-                                            <i class="fas fa-lungs text-blue-500"></i>
-                                            <div>
-                                                <div class="text-xs text-gray-600">Respiratory Rate</div>
-                                                <div class="font-bold">{{ $victim->respiratory_rate }}/min</div>
-                                            </div>
-                                        </div>
-                                    @endif
-                                </div>
-
-                                @if($victim->consciousness_level)
-                                    <div class="mt-2">
-                                        <span class="text-gray-600 text-sm">Consciousness Level:</span>
-                                        <span class="badge {{
-                                            $victim->consciousness_level === 'alert' ? 'badge-success' :
-                                            ($victim->consciousness_level === 'unresponsive' ? 'badge-error' : 'badge-warning')
-                                        }} ml-2">
-                                            {{ ucfirst($victim->consciousness_level) }}
+                                @if($victim->labor_stage)
+                                    <div class="text-sm">
+                                        <span class="text-gray-600">Labor Stage:</span>
+                                        <span class="badge badge-secondary ml-2">
+                                            {{ ucwords(str_replace('_', ' ', $victim->labor_stage)) }}
                                         </span>
                                     </div>
                                 @endif
@@ -219,47 +139,6 @@
                                 @if($victim->injury_description)
                                     <div class="text-sm">{{ $victim->injury_description }}</div>
                                 @endif
-                            </div>
-                        @endif
-
-                        {{-- Medical History --}}
-                        @if($victim->known_allergies || $victim->existing_medical_conditions || $victim->current_medications)
-                            <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                                <h4 class="font-semibold text-yellow-800 mb-2">
-                                    <i class="fas fa-file-medical mr-1"></i>Medical History
-                                </h4>
-                                <div class="space-y-2 text-sm">
-                                    @if($victim->known_allergies)
-                                        <div>
-                                            <span class="font-semibold text-red-600">Allergies:</span>
-                                            <span>{{ $victim->known_allergies }}</span>
-                                        </div>
-                                    @endif
-
-                                    @if($victim->existing_medical_conditions)
-                                        <div>
-                                            <span class="font-semibold text-orange-600">Conditions:</span>
-                                            <span>{{ $victim->existing_medical_conditions }}</span>
-                                        </div>
-                                    @endif
-
-                                    @if($victim->current_medications)
-                                        <div>
-                                            <span class="font-semibold text-blue-600">Medications:</span>
-                                            <span>{{ $victim->current_medications }}</span>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @endif
-
-                        {{-- Special Care Requirements --}}
-                        @if($victim->requires_special_care && $victim->special_care_notes)
-                            <div class="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded">
-                                <h4 class="font-semibold text-indigo-800 mb-2">
-                                    <i class="fas fa-hospital-user mr-1"></i>Special Care Requirements
-                                </h4>
-                                <div class="text-sm">{{ $victim->special_care_notes }}</div>
                             </div>
                         @endif
 

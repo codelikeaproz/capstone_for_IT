@@ -20,23 +20,27 @@ class RequestController extends Controller
         }
 
         // Apply filters
-        if ($request->filled('municipality')) {
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('request_number', 'LIKE', "%{$search}%")
+                  ->orWhere('requester_name', 'LIKE', "%{$search}%")
+                  ->orWhere('requester_email', 'LIKE', "%{$search}%")
+                  ->orWhere('requester_phone', 'LIKE', "%{$search}%")
+                  ->orWhere('request_description', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Admin (SuperAdmin) can filter by municipality
+        if ($request->filled('municipality') && Auth::user()->role === 'admin') {
             $query->byMunicipality($request->municipality);
-        }
-
-        if ($request->filled('status')) {
-            $query->byStatus($request->status);
-        }
-
-        if ($request->filled('urgency_level')) {
-            $query->byUrgency($request->urgency_level);
         }
 
         if ($request->filled('request_type')) {
             $query->where('request_type', $request->request_type);
         }
 
-        $requests = $query->latest()->paginate(15);
+        $requests = $query->latest()->paginate(15)->withQueryString();
 
         // Statistics
         $stats = [

@@ -191,12 +191,12 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function canAccessMunicipality(string $municipality): bool
     {
-        // SuperAdmin can access all municipalities
-        if ($this->isSuperAdmin()) {
+        // SuperAdmin  can access all municipalities
+        if ($this->isSuperAdmin())  {
             return true;
         }
 
-        // Others can only access their own municipality
+        // Staff and others can only access their own municipality
         return $this->municipality === $municipality;
     }
 

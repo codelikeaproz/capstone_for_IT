@@ -85,16 +85,14 @@ function getVictimFormTemplate(index) {
 
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text font-medium">Age</span>
+                        <span class="label-text font-medium">Birth Date <span class="text-error">*</span></span>
                     </label>
                     <input
-                        type="number"
-                        name="victims[${index}][age]"
+                        type="date"
+                        name="victims[${index}][birth_date]"
                         class="input input-bordered w-full focus:outline-primary"
-                        placeholder="Enter age"
-                        min="0"
-                        max="150"
-                        onchange="checkAgeCategory(${index}, this.value)"
+                        max="{{ date('Y-m-d') }}"
+                        required
                     >
                 </div>
 
@@ -127,20 +125,8 @@ function getVictimFormTemplate(index) {
                     >
                 </div>
 
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-medium">ID Number</span>
-                    </label>
-                    <input
-                        type="text"
-                        name="victims[${index}][id_number]"
-                        class="input input-bordered w-full focus:outline-primary"
-                        placeholder="Government ID"
-                    >
-                </div>
-
                 <!-- Address -->
-                <div class="form-control md:col-span-2">
+                <div class="form-control">
                     <label class="label">
                         <span class="label-text font-medium">Address</span>
                     </label>
@@ -203,9 +189,9 @@ function getVictimFormTemplate(index) {
                     ></textarea>
                 </div>
 
-                <!-- Pregnancy Section (Only for females) -->
+                <!-- Pregnancy/Maternity Section (Only for females) -->
                 <div class="md:col-span-2" id="victim-${index}-pregnancy-section" style="display: none;">
-                    <div class="divider">Pregnancy Information</div>
+                    <div class="divider">Maternity Information</div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="form-control">
@@ -219,141 +205,31 @@ function getVictimFormTemplate(index) {
                                     onchange="togglePregnancyDetails(${index}, this.checked)"
                                 >
                                 <div>
-                                    <span class="label-text font-medium block">Patient is Pregnant</span>
+                                    <span class="label-text font-medium block">Maternity Case (Pregnant/In Labor)</span>
                                     <span class="text-xs text-base-content/60">Check if applicable</span>
                                 </div>
                             </label>
                         </div>
 
                         <div id="victim-${index}-pregnancy-details" style="display: none;">
-                            <div class="grid grid-cols-2 gap-2">
-                                <div class="form-control">
-                                    <label class="label">
-                                        <span class="label-text text-xs">Trimester</span>
-                                    </label>
-                                    <select
-                                        name="victims[${index}][pregnancy_trimester]"
-                                        class="select select-bordered select-sm w-full"
-                                    >
-                                        <option value="">Select</option>
-                                        <option value="first">First</option>
-                                        <option value="second">Second</option>
-                                        <option value="third">Third</option>
-                                    </select>
-                                </div>
-                                <div class="form-control">
-                                    <label class="label">
-                                        <span class="label-text text-xs">Due Date</span>
-                                    </label>
-                                    <input
-                                        type="date"
-                                        name="victims[${index}][expected_delivery_date]"
-                                        class="input input-bordered input-sm w-full"
-                                    >
-                                </div>
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text text-xs">Labor Stage</span>
+                                </label>
+                                <select
+                                    name="victims[${index}][labor_stage]"
+                                    class="select select-bordered select-sm w-full"
+                                >
+                                    <option value="">Select status</option>
+                                    <option value="pregnant_no_labor">Pregnant (No Labor)</option>
+                                    <option value="in_labor">In Labor</option>
+                                    <option value="birth_in_vehicle">Birth in Vehicle</option>
+                                    <option value="birth_in_hospital">Birth in Hospital</option>
+                                    <option value="birth_at_home">Birth at Home</option>
+                                    <option value="birth_other_place">Birth in Other Place</option>
+                                    <option value="post_delivery">Post Delivery</option>
+                                </select>
                             </div>
-                        </div>
-
-                        <div class="form-control md:col-span-2" id="victim-${index}-pregnancy-complications" style="display: none;">
-                            <label class="label">
-                                <span class="label-text font-medium">Pregnancy Complications</span>
-                            </label>
-                            <textarea
-                                name="victims[${index}][pregnancy_complications]"
-                                rows="2"
-                                class="textarea textarea-bordered w-full focus:outline-primary"
-                                placeholder="Note any pregnancy-related complications or concerns..."
-                            ></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Medical Vitals Section -->
-                <div class="md:col-span-2" id="victim-${index}-vitals-section" style="display: none;">
-                    <div class="divider">Medical Vitals</div>
-
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text text-xs">Blood Pressure</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="victims[${index}][blood_pressure]"
-                                class="input input-bordered input-sm w-full"
-                                placeholder="120/80"
-                            >
-                        </div>
-
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text text-xs">Heart Rate</span>
-                            </label>
-                            <input
-                                type="number"
-                                name="victims[${index}][heart_rate]"
-                                class="input input-bordered input-sm w-full"
-                                placeholder="72"
-                                min="0"
-                                max="300"
-                            >
-                        </div>
-
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text text-xs">Temperature (°C)</span>
-                            </label>
-                            <input
-                                type="number"
-                                step="0.1"
-                                name="victims[${index}][temperature]"
-                                class="input input-bordered input-sm w-full"
-                                placeholder="36.5"
-                                min="30"
-                                max="45"
-                            >
-                        </div>
-
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text text-xs">Respiratory Rate</span>
-                            </label>
-                            <input
-                                type="number"
-                                name="victims[${index}][respiratory_rate]"
-                                class="input input-bordered input-sm w-full"
-                                placeholder="16"
-                                min="0"
-                                max="100"
-                            >
-                        </div>
-
-                        <div class="form-control md:col-span-2">
-                            <label class="label">
-                                <span class="label-text text-xs">Consciousness Level</span>
-                            </label>
-                            <select
-                                name="victims[${index}][consciousness_level]"
-                                class="select select-bordered select-sm w-full"
-                            >
-                                <option value="">Select level</option>
-                                <option value="alert">Alert (A)</option>
-                                <option value="verbal">Responds to Verbal (V)</option>
-                                <option value="pain">Responds to Pain (P)</option>
-                                <option value="unresponsive">Unresponsive (U)</option>
-                            </select>
-                        </div>
-
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text text-xs">Blood Type</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="victims[${index}][blood_type]"
-                                class="input input-bordered input-sm w-full"
-                                placeholder="O+"
-                            >
                         </div>
                     </div>
                 </div>
@@ -392,7 +268,7 @@ function getVictimFormTemplate(index) {
                             </select>
                         </div>
 
-                        <div class="form-control">
+                        <div class="form-control md:col-span-2">
                             <label class="label">
                                 <span class="label-text font-medium">Medical Treatment Given</span>
                             </label>
@@ -406,48 +282,6 @@ function getVictimFormTemplate(index) {
                     </div>
                 </div>
 
-                <!-- Emergency Contact -->
-                <div class="md:col-span-2">
-                    <div class="divider">Emergency Contact</div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">Contact Name</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="victims[${index}][emergency_contact_name]"
-                                class="input input-bordered w-full focus:outline-primary"
-                                placeholder="Full name"
-                            >
-                        </div>
-
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">Contact Phone</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="victims[${index}][emergency_contact_phone]"
-                                class="input input-bordered w-full focus:outline-primary"
-                                placeholder="Phone number"
-                            >
-                        </div>
-
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">Relationship</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="victims[${index}][emergency_contact_relationship]"
-                                class="input input-bordered w-full focus:outline-primary"
-                                placeholder="e.g., Spouse, Parent"
-                            >
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     `;
@@ -506,21 +340,15 @@ function togglePregnancyFields(index, gender) {
 // Toggle pregnancy details
 function togglePregnancyDetails(index, isPregnant) {
     const detailsSection = document.getElementById(`victim-${index}-pregnancy-details`);
-    const complicationsSection = document.getElementById(`victim-${index}-pregnancy-complications`);
 
     if (detailsSection) {
         detailsSection.style.display = isPregnant ? 'block' : 'none';
-    }
-
-    if (complicationsSection) {
-        complicationsSection.style.display = isPregnant ? 'block' : 'none';
     }
 }
 
 // Toggle medical fields based on medical status
 function toggleMedicalFields(index, medicalStatus) {
     const injurySection = document.getElementById(`victim-${index}-injury-section`);
-    const vitalsSection = document.getElementById(`victim-${index}-vitals-section`);
     const hospitalSection = document.getElementById(`victim-${index}-hospital-section`);
 
     // Show injury description for injured statuses
@@ -529,32 +357,11 @@ function toggleMedicalFields(index, medicalStatus) {
         injurySection.style.display = showInjury ? 'block' : 'none';
     }
 
-    // Show vitals for critical injuries
-    const showVitals = ['major_injury', 'critical'].includes(medicalStatus);
-    if (vitalsSection) {
-        vitalsSection.style.display = showVitals ? 'block' : 'none';
-    }
-
     // Show hospital info for injuries
     const showHospital = ['minor_injury', 'major_injury', 'critical'].includes(medicalStatus);
     if (hospitalSection) {
         hospitalSection.style.display = showHospital ? 'block' : 'none';
     }
 }
-
-// Check age category and show alert for special care
-function checkAgeCategory(index, age) {
-    if (age < 13 || age >= 60) {
-        const category = age < 13 ? 'child' : 'elderly';
-        showInfoToast(`This ${category} may require special care attention.`);
-    }
-}
-
-// Info toast
-function showInfoToast(message) {
-    console.log('Info:', message);
-    // You can implement actual toast here
-}
 </script>
 @endpush
-

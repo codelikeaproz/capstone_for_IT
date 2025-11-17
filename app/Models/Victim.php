@@ -14,64 +14,26 @@ class Victim extends Model
         'incident_id',
         'first_name',
         'last_name',
-        'age',
+        'birth_date',
         'gender',
         'contact_number',
         'address',
-        'id_number',
         'medical_status',
         'injury_description',
         'medical_treatment',
         'hospital_referred',
         'transportation_method',
         'hospital_arrival_time',
-        'helmet_used',
-        'seatbelt_used',
-        'protective_gear_used',
         'victim_role',
-        'vehicle_type_involved',
-        'seating_position',
-        'emergency_contact_name',
-        'emergency_contact_phone',
-        'emergency_contact_relationship',
-        'insurance_provider',
-        'insurance_policy_number',
-        'legal_action_required',
-        // Pregnancy-related fields
+        // Pregnancy-related fields (Maternity cases)
         'is_pregnant',
-        'pregnancy_trimester',
-        'pregnancy_complications',
-        'expected_delivery_date',
-        // Age-based care
-        'age_category',
-        'requires_special_care',
-        'special_care_notes',
-        // Medical vitals
-        'blood_pressure',
-        'heart_rate',
-        'temperature',
-        'respiratory_rate',
-        'consciousness_level',
-        'blood_type',
-        // Medical history
-        'known_allergies',
-        'existing_medical_conditions',
-        'current_medications',
+        'labor_stage',
     ];
 
     protected $casts = [
-        'age' => 'integer',
+        'birth_date' => 'date',
         'hospital_arrival_time' => 'datetime',
-        'expected_delivery_date' => 'date',
-        'helmet_used' => 'boolean',
-        'seatbelt_used' => 'boolean',
-        'protective_gear_used' => 'boolean',
-        'legal_action_required' => 'boolean',
         'is_pregnant' => 'boolean',
-        'requires_special_care' => 'boolean',
-        'heart_rate' => 'integer',
-        'temperature' => 'decimal:1',
-        'respiratory_rate' => 'integer',
     ];
 
     // Relationships
@@ -84,6 +46,36 @@ class Victim extends Model
     public function getFullNameAttribute()
     {
         return "{$this->first_name} {$this->last_name}";
+    }
+
+    /**
+     * Calculate age from birth_date
+     * Returns null if birth_date is not set
+     *
+     * @return int|null
+     */
+    public function getAgeAttribute()
+    {
+        if (!$this->birth_date) {
+            return null;
+        }
+
+        return \Carbon\Carbon::parse($this->birth_date)->age;
+    }
+
+    /**
+     * Get formatted birth date
+     * Format: Month Day, Year (e.g., September 16, 2003)
+     *
+     * @return string|null
+     */
+    public function getFormattedBirthDateAttribute()
+    {
+        if (!$this->birth_date) {
+            return null;
+        }
+
+        return \Carbon\Carbon::parse($this->birth_date)->format('F d, Y');
     }
 
     public function getMedicalStatusBadgeAttribute()
@@ -113,4 +105,5 @@ class Victim extends Model
     {
         return $query->whereIn('medical_status', ['critical', 'deceased']);
     }
+
 }

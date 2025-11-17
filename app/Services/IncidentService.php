@@ -231,7 +231,7 @@ class IncidentService
     }
 
     /**
-     * Create victim with automatic age category calculation
+     * Create victim for incident
      *
      * @param Incident $incident
      * @param array $victimData
@@ -239,16 +239,6 @@ class IncidentService
      */
     public function createVictimForIncident(Incident $incident, array $victimData): Victim
     {
-        // Auto-calculate age category if age is provided
-        if (isset($victimData['age'])) {
-            $victimData['age_category'] = $this->calculateAgeCategory($victimData['age']);
-        }
-
-        // Auto-determine special care requirements
-        if (!isset($victimData['requires_special_care'])) {
-            $victimData['requires_special_care'] = $this->requiresSpecialCare($victimData);
-        }
-
         $victim = $incident->victims()->create($victimData);
 
         // Update incident casualty counts
@@ -257,45 +247,6 @@ class IncidentService
         return $victim;
     }
 
-    /**
-     * Calculate age category for special care determination
-     *
-     * @param int $age
-     * @return string
-     */
-    private function calculateAgeCategory(int $age): string
-    {
-        return match (true) {
-            $age < 13 => 'child',
-            $age < 18 => 'teen',
-            $age < 60 => 'adult',
-            default => 'elderly'
-        };
-    }
-
-    /**
-     * Determine if victim requires special care
-     *
-     * @param array $victimData
-     * @return bool
-     */
-    private function requiresSpecialCare(array $victimData): bool
-    {
-        // Children, elderly, pregnant women, or critical status require special care
-        if (isset($victimData['age_category']) && in_array($victimData['age_category'], ['child', 'elderly'])) {
-            return true;
-        }
-
-        if (isset($victimData['is_pregnant']) && $victimData['is_pregnant']) {
-            return true;
-        }
-
-        if (isset($victimData['medical_status']) && in_array($victimData['medical_status'], ['critical', 'major_injury'])) {
-            return true;
-        }
-
-        return false;
-    }
 
     /**
      * Update incident casualty counts
