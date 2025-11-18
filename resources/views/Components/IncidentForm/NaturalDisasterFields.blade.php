@@ -30,103 +30,6 @@
             @enderror
         </div>
 
-        <!-- Affected Area Size -->
-        <div class="form-control">
-            <label class="label">
-                <span class="label-text font-medium">Affected Area Size</span>
-                <span class="label-text-alt text-base-content/60">In square kilometers</span>
-            </label>
-            <input
-                type="number"
-                step="0.01"
-                min="0"
-                name="affected_area_size"
-                class="input input-bordered w-full focus:outline-primary @error('affected_area_size') input-error @enderror"
-                placeholder="e.g., 5.5"
-                value="{{ old('affected_area_size') }}"
-            >
-            @error('affected_area_size')
-                <label class="label">
-                    <span class="label-text-alt text-error">{{ $message }}</span>
-                </label>
-            @enderror
-        </div>
-
-        <!-- Families Affected -->
-        <div class="form-control">
-            <label class="label">
-                <span class="label-text font-medium">Number of Families Affected <span class="text-error">*</span></span>
-            </label>
-            <input
-                type="number"
-                name="families_affected"
-                min="0"
-                class="input input-bordered w-full focus:outline-primary @error('families_affected') input-error @enderror"
-                placeholder="e.g., 150"
-                value="{{ old('families_affected') }}"
-            >
-            @error('families_affected')
-                <label class="label">
-                    <span class="label-text-alt text-error">{{ $message }}</span>
-                </label>
-            @enderror
-        </div>
-
-        <!-- Structures Damaged -->
-        <div class="form-control">
-            <label class="label">
-                <span class="label-text font-medium">Number of Structures Damaged</span>
-            </label>
-            <input
-                type="number"
-                name="structures_damaged"
-                min="0"
-                class="input input-bordered w-full focus:outline-primary @error('structures_damaged') input-error @enderror"
-                placeholder="e.g., 50"
-                value="{{ old('structures_damaged') }}"
-            >
-            @error('structures_damaged')
-                <label class="label">
-                    <span class="label-text-alt text-error">{{ $message }}</span>
-                </label>
-            @enderror
-        </div>
-
-        <!-- Shelter Needed -->
-        <div class="form-control">
-            <label class="label cursor-pointer justify-start gap-3 bg-base-200 p-4 rounded-box">
-                <input
-                    type="checkbox"
-                    name="shelter_needed"
-                    value="1"
-                    class="checkbox checkbox-primary"
-                    {{ old('shelter_needed') ? 'checked' : '' }}
-                >
-                <div>
-                    <span class="label-text font-medium block">Shelter Needed</span>
-                    <span class="label-text-alt text-base-content/60">Check if evacuation shelter is required</span>
-                </div>
-            </label>
-        </div>
-
-        <!-- Infrastructure Damage -->
-        <div class="form-control md:col-span-2">
-            <label class="label">
-                <span class="label-text font-medium">Infrastructure Damage Description</span>
-            </label>
-            <textarea
-                name="infrastructure_damage"
-                rows="3"
-                class="textarea textarea-bordered w-full focus:outline-primary @error('infrastructure_damage') textarea-error @enderror"
-                placeholder="Describe damage to roads, bridges, power lines, water systems, and other infrastructure..."
-            >{{ old('infrastructure_damage') }}</textarea>
-            @error('infrastructure_damage')
-                <label class="label">
-                    <span class="label-text-alt text-error">{{ $message }}</span>
-                </label>
-            @enderror
-        </div>
-
         <!-- Property Damage Estimate -->
         <div class="form-control">
             <label class="label">
@@ -148,6 +51,24 @@
                 </label>
             @enderror
         </div>
+
+        <!-- Disaster Description -->
+        <div class="form-control md:col-span-2">
+            <label class="label">
+                <span class="label-text font-medium">Disaster Description</span>
+                <span class="label-text-alt text-base-content/60">Provide detailed information about the disaster</span>
+            </label>
+            <textarea
+                name="disaster_description"
+                rows="4"
+                class="textarea textarea-bordered w-full focus:outline-primary @error('disaster_description') textarea-error @enderror"
+                placeholder="Describe the disaster impact, affected areas, damage to infrastructure, evacuation status, and any other relevant information..."
+            >{{ old('disaster_description') }}</textarea>
+            @error('disaster_description')
+                <label class="label">
+                    <span class="label-text-alt text-error">{{ $message }}</span>
+                </label>
+            @enderror
+        </div>
     </div>
 </div>
-

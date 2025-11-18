@@ -3,150 +3,199 @@
 @section('title', 'Vehicle Fleet Management')
 
 @section('content')
-<div class="mx-auto px-4 py-6">
-    <!-- Header Section -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 space-y-4 lg:space-y-0">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
-                <i class="fas fa-truck text-blue-500 mr-3"></i>
-                Vehicle Fleet Management
-            </h1>
-            <p class="text-gray-600 mt-1">Monitor and manage emergency response vehicles</p>
-        </div>
+<div class="min-h-screen bg-gray-50">
+    <div class="mx-auto px-2 sm:px-6 lg:px-6 py-6">
 
-        <div class="flex space-x-3">
-            <a href="{{ route('vehicles.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus mr-2"></i>
-                Add New Vehicle
-            </a>
-            <button class="btn btn-outline" onclick="refreshData()">
-                <i class="fas fa-sync-alt mr-2"></i>
-                Refresh
-            </button>
-        </div>
-    </div>
-
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <div class="card bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg">
-            <div class="card-body py-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-blue-100 text-sm">Total Fleet</p>
-                        <p class="text-2xl font-bold">{{ $stats['total'] }}</p>
-                    </div>
-                    <i class="fas fa-cars text-2xl text-blue-200"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="card bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg">
-            <div class="card-body py-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-green-100 text-sm">Available</p>
-                        <p class="text-2xl font-bold">{{ $stats['available'] }}</p>
-                    </div>
-                    <i class="fas fa-check-circle text-2xl text-green-200"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="card bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg">
-            <div class="card-body py-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-orange-100 text-sm">In Use</p>
-                        <p class="text-2xl font-bold">{{ $stats['in_use'] }}</p>
-                    </div>
-                    <i class="fas fa-play-circle text-2xl text-orange-200"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="card bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg">
-            <div class="card-body py-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-purple-100 text-sm">Maintenance</p>
-                        <p class="text-2xl font-bold">{{ $stats['maintenance'] }}</p>
-                    </div>
-                    <i class="fas fa-wrench text-2xl text-purple-200"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="card bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg">
-            <div class="card-body py-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-red-100 text-sm">Low Fuel</p>
-                        <p class="text-2xl font-bold">{{ $stats['low_fuel'] }}</p>
-                    </div>
-                    <i class="fas fa-gas-pump text-2xl text-red-200"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="card bg-base-100 shadow-sm mb-6">
-        <div class="card-body">
-            <h2 class="card-title mb-4">
-                <i class="fas fa-filter text-blue-500"></i>
-                Filters
-            </h2>
-
-            <form method="GET" action="{{ route('vehicles.index') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="form-control">
-                    <select name="municipality" class="select select-bordered select-sm">
-                        <option value="">All Municipalities</option>
-                        @foreach(config('locations.municipalities') as $municipality => $barangays)
-                            <option value="{{ $municipality }}" {{ request('municipality') == $municipality ? 'selected' : '' }}>
-                                {{ $municipality }}
-                            </option>
-                        @endforeach
-                    </select>
+        {{-- Page Header --}}
+        <header class="mb-6">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <i class="fas fa-truck text-accent" aria-hidden="true"></i>
+                        <span>Vehicle Fleet Management</span>
+                    </h1>
+                    <p class="text-base text-gray-600 mt-1">Monitor and manage emergency response vehicles</p>
                 </div>
 
-                <div class="form-control">
-                    <select name="vehicle_type" class="select select-bordered select-sm">
-                        <option value="">All Types</option>
-                        <option value="ambulance" {{ request('vehicle_type') == 'ambulance' ? 'selected' : '' }}>🚑 Ambulance</option>
-                        <option value="fire_truck" {{ request('vehicle_type') == 'fire_truck' ? 'selected' : '' }}>🚒 Fire Truck</option>
-                        <option value="rescue_vehicle" {{ request('vehicle_type') == 'rescue_vehicle' ? 'selected' : '' }}>🚐 Rescue Vehicle</option>
-                        <option value="patrol_car" {{ request('vehicle_type') == 'patrol_car' ? 'selected' : '' }}>🚔 Patrol Car</option>
-                        <option value="support_vehicle" {{ request('vehicle_type') == 'support_vehicle' ? 'selected' : '' }}>🚚 Support Vehicle</option>
-                    </select>
-                </div>
-
-                <div class="form-control">
-                    <select name="status" class="select select-bordered select-sm">
-                        <option value="">All Statuses</option>
-                        <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>Available</option>
-                        <option value="in_use" {{ request('status') == 'in_use' ? 'selected' : '' }}>In Use</option>
-                        <option value="maintenance" {{ request('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                        <option value="out_of_service" {{ request('status') == 'out_of_service' ? 'selected' : '' }}>Out of Service</option>
-                    </select>
-                </div>
-
-                <div class="flex space-x-2">
-                    <button type="submit" class="btn btn-primary btn-sm flex-1">
-                        <i class="fas fa-search mr-1"></i> Filter
-                    </button>
-                    <a href="{{ route('vehicles.index') }}" class="btn btn-outline btn-sm">
-                        <i class="fas fa-times"></i>
+                <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                    <a href="{{ route('vehicles.create') }}" class="btn btn-primary gap-2 w-full sm:w-auto min-h-[44px]">
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        <span>Add New Vehicle</span>
                     </a>
+                    <button type="button" class="btn btn-success gap-2 w-full sm:w-auto min-h-[44px]" onclick="refreshData()" aria-label="Refresh vehicles">
+                        <i class="fas fa-redo" aria-hidden="true"></i>
+                        <span>Refresh</span>
+                    </button>
                 </div>
-            </form>
-        </div>
-    </div>
+            </div>
+        </header>
 
-    <!-- Vehicle Grid -->
-    @if($vehicles->count() > 0)
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
-            @foreach($vehicles as $vehicle)
-                <div class="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
+        {{-- Statistics Cards --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6" role="region" aria-label="Vehicle fleet statistics">
+            {{-- Total Fleet --}}
+            <div class="stats shadow bg-white hover:shadow-lg transition-shadow">
+                <div class="stat">
+                    <div class="stat-figure text-info">
+                        <i class="fas fa-cars text-4xl" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-title text-gray-600">Total Fleet</div>
+                    <div class="stat-value text-info">{{ number_format($stats['total']) }}</div>
+                    <div class="stat-desc text-sm text-gray-500">All vehicles</div>
+                </div>
+            </div>
+
+            {{-- Available --}}
+            <div class="stats shadow bg-white hover:shadow-lg transition-shadow">
+                <div class="stat">
+                    <div class="stat-figure text-success">
+                        <i class="fas fa-check-circle text-4xl" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-title text-gray-600">Available</div>
+                    <div class="stat-value text-success">{{ number_format($stats['available']) }}</div>
+                    <div class="stat-desc text-sm text-gray-500">Ready to deploy</div>
+                </div>
+            </div>
+
+            {{-- In Use --}}
+            <div class="stats shadow bg-white hover:shadow-lg transition-shadow">
+                <div class="stat">
+                    <div class="stat-figure text-warning">
+                        <i class="fas fa-play-circle text-4xl" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-title text-gray-600">In Use</div>
+                    <div class="stat-value text-warning">{{ number_format($stats['in_use']) }}</div>
+                    <div class="stat-desc text-sm text-gray-500">Active deployment</div>
+                </div>
+            </div>
+
+            {{-- Maintenance --}}
+            <div class="stats shadow bg-white hover:shadow-lg transition-shadow">
+                <div class="stat">
+                    <div class="stat-figure text-accent">
+                        <i class="fas fa-wrench text-4xl" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-title text-gray-600">Maintenance</div>
+                    <div class="stat-value text-accent">{{ number_format($stats['maintenance']) }}</div>
+                    <div class="stat-desc text-sm text-gray-500">Under service</div>
+                </div>
+            </div>
+
+            {{-- Low Fuel --}}
+            <div class="stats shadow bg-white hover:shadow-lg transition-shadow">
+                <div class="stat">
+                    <div class="stat-figure text-error">
+                        <i class="fas fa-gas-pump text-4xl" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-title text-gray-600">Low Fuel</div>
+                    <div class="stat-value text-error">{{ number_format($stats['low_fuel']) }}</div>
+                    <div class="stat-desc text-sm text-gray-500">Needs refueling</div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Main Vehicle Card --}}
+        <div class="card bg-white shadow-lg">
+            <div class="card-body p-0">
+                <div class="px-4 py-6 border-b border-gray-200">
+                    <div class="flex flex-row justify-between gap-6">
+                        <div class="flex-shrink-0">
+                            <h2 class="text-xl font-semibold text-gray-800">Vehicle Fleet</h2>
+                            <p class="text-sm text-gray-500 mt-2">
+                                Showing {{ $vehicles->firstItem() ?? 0 }} to {{ $vehicles->lastItem() ?? 0 }} of {{ number_format($vehicles->total()) }} results
+                            </p>
+                        </div>
+                        <form method="GET" action="{{ route('vehicles.index') }}" class="flex-shrink-0 lg:ml-auto">
+                            <div class="flex flex-wrap items-end gap-3">
+                                {{-- Search Input --}}
+                                <div class="form-control">
+                                    <label for="search" class="label">
+                                        <span class="label-text font-medium text-gray-700 my-1">Search</span>
+                                    </label>
+                                    <input type="text" name="search" id="search" value="{{ request('search') }}"
+                                           placeholder="Vehicle number, plate, model..."
+                                           class="input input-bordered w-full focus:outline-primary min-h-[44px] focus:border-primary">
+                                </div>
+
+                                {{-- Municipality Filter (SuperAdmin Only) --}}
+                                @if(Auth::user()->isSuperAdmin())
+                                <div class="form-control">
+                                    <label for="municipality" class="label">
+                                        <span class="label-text font-medium text-gray-700 my-1">Municipality</span>
+                                    </label>
+                                    <select name="municipality" id="municipality" class="select select-bordered w-full focus:outline-primary min-h-[44px] focus:border-primary">
+                                        <option value="" {{ request('municipality') === '' ? 'selected' : '' }}>All Municipalities</option>
+                                        @foreach(config('locations.municipalities') as $municipality => $barangays)
+                                            <option value="{{ $municipality }}" {{ request('municipality') === $municipality ? 'selected' : '' }}>
+                                                {{ $municipality }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @endif
+
+                                {{-- Status Filter --}}
+                                <div class="form-control">
+                                    <label for="status" class="label">
+                                        <span class="label-text font-medium text-gray-700 my-1">Status</span>
+                                    </label>
+                                    <select name="status" id="status" class="select select-bordered w-full focus:outline-primary min-h-[44px] focus:border-primary">
+                                        <option value="" {{ request('status') === '' ? 'selected' : '' }}>All Statuses</option>
+                                        <option value="available" {{ request('status') === 'available' ? 'selected' : '' }}>Available</option>
+                                        <option value="in_use" {{ request('status') === 'in_use' ? 'selected' : '' }}>In Use</option>
+                                        <option value="maintenance" {{ request('status') === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                                        <option value="out_of_service" {{ request('status') === 'out_of_service' ? 'selected' : '' }}>Out of Service</option>
+                                    </select>
+                                </div>
+
+                                {{-- Filter Actions --}}
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text font-medium text-gray-700 opacity-0">Actions</span>
+                                    </label>
+                                    <div class="flex gap-2">
+                                        <button type="submit" class="btn btn-primary gap-2 min-h-[44px] px-6">
+                                            <i class="fas fa-search" aria-hidden="true"></i>
+                                            <span>Apply</span>
+                                        </button>
+                                        <a href="{{ route('vehicles.index') }}" class="btn btn-outline gap-2 min-h-[44px]" aria-label="Clear all filters">
+                                            <i class="fas fa-times" aria-hidden="true"></i>
+                                            <span>Clear</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Active Filters Display --}}
+                            @if(request('search') || request('municipality') || request('status'))
+                            <div class="flex items-center gap-2 flex-wrap mt-3">
+                                <span class="text-sm font-medium text-gray-700">Active filters:</span>
+                                @if(request('search'))
+                                    <span class="badge badge-primary gap-1">
+                                        <span>Search: "{{ request('search') }}"</span>
+                                    </span>
+                                @endif
+                                @if(request('municipality'))
+                                    <span class="badge badge-secondary gap-1">
+                                        <span>{{ request('municipality') }}</span>
+                                    </span>
+                                @endif
+                                @if(request('status'))
+                                    <span class="badge badge-info gap-1">
+                                        <span>{{ ucfirst(str_replace('_', ' ', request('status'))) }}</span>
+                                    </span>
+                                @endif
+                            </div>
+                            @endif
+                        </form>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    {{-- Vehicle Grid --}}
+                    @if($vehicles->count() > 0)
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            @foreach($vehicles as $vehicle)
+                                <div class="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
                     <div class="card-body p-4">
                         <!-- Vehicle Header -->
                         <div class="flex items-center justify-between mb-3">
@@ -251,28 +300,47 @@
                                     @endif
                                 </ul>
                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
 
-        <!-- Pagination -->
-        @if($vehicles->hasPages())
-            <div class="flex justify-center mt-6">
-                {{ $vehicles->links() }}
+                        {{-- Pagination --}}
+                        @if($vehicles->hasPages())
+                            <div class="border-t border-gray-200 mt-6 pt-4">
+                                {{ $vehicles->links() }}
+                            </div>
+                        @endif
+                    @else
+                        {{-- Empty State --}}
+                        <div class="text-center py-16 px-4">
+                            <i class="fas fa-truck text-6xl text-gray-300 mb-4" aria-hidden="true"></i>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">No Vehicles Found</h3>
+                            <p class="text-gray-500 mb-6">
+                                @if(request('search') || request('status'))
+                                    No vehicles match your current filters. Try adjusting your search criteria.
+                                @else
+                                    There are no vehicles to display yet.
+                                @endif
+                            </p>
+                            @if(request('search') || request('status'))
+                                <a href="{{ route('vehicles.index') }}" class="btn btn-outline gap-2">
+                                    <i class="fas fa-times" aria-hidden="true"></i>
+                                    <span>Clear Filters</span>
+                                </a>
+                            @else
+                                <a href="{{ route('vehicles.create') }}" class="btn btn-primary gap-2">
+                                    <i class="fas fa-plus" aria-hidden="true"></i>
+                                    <span>Add First Vehicle</span>
+                                </a>
+                            @endif
+                        </div>
+                    @endif
+                </div>
             </div>
-        @endif
-    @else
-        <div class="text-center py-12">
-            <i class="fas fa-truck text-6xl text-gray-300 mb-4"></i>
-            <h3 class="text-xl font-semibold text-gray-600 mb-2">No vehicles found</h3>
-            <p class="text-gray-500 mb-4">No vehicles match your current filters.</p>
-            <a href="{{ route('vehicles.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus mr-2"></i>Add First Vehicle
-            </a>
         </div>
-    @endif
+    </div>
 </div>
 
 <!-- Assignment Modal -->

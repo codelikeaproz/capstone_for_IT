@@ -133,38 +133,71 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getRoleBadgeAttribute()
     {
         return match ($this->role) {
-            'admin' => 'badge-error',
+            'superadmin' => 'badge-error badge-lg', // System-wide admin - red with large size
+            'admin' => 'badge-warning', // Municipality admin - warning color
             'staff' => 'badge-primary',
-            'responder' => 'badge-warning',
+            'responder' => 'badge-info',
             'citizen' => 'badge-neutral',
             default => 'badge-ghost'
         };
     }
 
     // Methods
-    public function isAdmin()
+
+    /**
+     * Check if user is SuperAdmin (system-wide access)
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'superadmin';
+    }
+
+    /**
+     * Check if user is Admin (municipality-level access)
+     */
+    public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
 
-    public function isStaff()
+    /**
+     * Check if user has admin privileges (either superadmin or admin)
+     */
+    public function hasAdminPrivileges(): bool
+    {
+        return $this->isSuperAdmin() || $this->isAdmin();
+    }
+
+    public function isStaff(): bool
     {
         return $this->role === 'staff';
     }
 
-    public function isResponder()
+    public function isResponder(): bool
     {
         return $this->role === 'responder';
     }
 
-    public function isCitizen()
+    public function isCitizen(): bool
     {
         return $this->role === 'citizen';
     }
 
-    public function canAccessMunicipality($municipality)
+    /**
+     * Check if user can access data from a specific municipality
+     *
+     * @param string $municipality
+     * @return bool
+     */
+    public function canAccessMunicipality(string $municipality): bool
     {
-        return $this->isAdmin() || $this->municipality === $municipality;
+        // SuperAdmin  can access all municipalities
+        if ($this->isSuperAdmin())  {
+            return true;
+        }
+
+        // Staff and others can only access their own municipality
+        return $this->municipality === $municipality;
     }
 
     public function updateLastLogin()

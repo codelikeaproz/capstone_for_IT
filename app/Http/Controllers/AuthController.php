@@ -25,32 +25,35 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+            'username' => 'required|string',
             'password' => 'required|min:6',
         ]);
 
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput($request->only('email'));
+            return back()->withErrors($validator)->withInput($request->only('username'));
         }
 
-        $email = $request->email;
+        $username = $request->username;
         $password = $request->password;
         $remember = $request->has('remember');
         $ipAddress = $request->ip();
         $userAgent = $request->userAgent();
 
+        // Determine if input is email or username
+        $loginField = filter_var($username, FILTER_VALIDATE_EMAIL) ? 'email' : 'name';
+
         // Check for user and account lockout
-        $user = User::where('email', $email)->first();
+        $user = User::where($loginField, $username)->first();
 
         if ($user && $user->isAccountLocked()) {
-            $this->logLoginAttempt($email, $ipAddress, $userAgent, false, 'account_locked');
+            $this->logLoginAttempt($username, $ipAddress, $userAgent, false, 'account_locked');
             return back()->withErrors([
-                'email' => 'Account is temporarily locked due to too many failed attempts. Please try again later.',
-            ])->withInput($request->only('email'));
+                'username' => 'Account is temporarily locked due to too many failed attempts. Please try again later.',
+            ])->withInput($request->only('username'));
         }
 
         // Attempt authentication
-        $credentials = ['email' => $email, 'password' => $password, 'is_active' => true];
+        $credentials = [$loginField => $username, 'password' => $password, 'is_active' => true];
 
         if (Auth::attempt($credentials, $remember)) {
             $user = Auth::user();
@@ -64,10 +67,10 @@ class AuthController extends Controller
             // Check if email is verified (required in production)
             if (!$user->hasVerifiedEmail()) {
                 Auth::logout();
-                $this->logLoginAttempt($email, $ipAddress, $userAgent, false, 'email_not_verified');
+                $this->logLoginAttempt($username, $ipAddress, $userAgent, false, 'email_not_verified');
                 return back()->withErrors([
-                    'email' => 'Please verify your email address before logging in. Check your inbox for verification link.',
-                ])->withInput($request->only('email'));
+                    'username' => 'Please verify your email address before logging in. Check your inbox for verification link.',
+                ])->withInput($request->only('username'));
             }
 
             // Reset failed login attempts on successful authentication
@@ -77,7 +80,7 @@ class AuthController extends Controller
             if (app()->environment('local')) {
                 // Direct login without 2FA in development
                 $user->updateLastLogin();
-                $this->logLoginAttempt($email, $ipAddress, $userAgent, true, 'completed_login_dev');
+                $this->logLoginAttempt($username, $ipAddress, $userAgent, true, 'completed_login_dev');
                 activity('login')
                     ->performedOn($user)
                     ->withProperties(['ip_address' => $ipAddress, 'user_agent' => $userAgent, 'step' => 'completed_login_dev'])
@@ -95,7 +98,7 @@ class AuthController extends Controller
             $request->session()->put('2fa_login_time', now());
 
             // Log the initial authentication (not complete login yet)
-            $this->logLoginAttempt($email, $ipAddress, $userAgent, true, 'pending_2fa');
+            $this->logLoginAttempt($username, $ipAddress, $userAgent, true, 'pending_2fa');
 
             // Log activity
             activity('login')
@@ -115,11 +118,11 @@ class AuthController extends Controller
             }
 
             // Log failed login
-            $this->logLoginAttempt($email, $ipAddress, $userAgent, false, 'invalid_credentials');
+            $this->logLoginAttempt($username, $ipAddress, $userAgent, false, 'invalid_credentials');
 
             return back()->withErrors([
-                'email' => 'Invalid credentials or account is disabled.',
-            ])->withInput($request->only('email'));
+                'username' => 'Invalid credentials or account is disabled.',
+            ])->withInput($request->only('username'));
         }
     }
 

@@ -81,125 +81,104 @@
             </div>
         </div>
 
-        {{-- Filters Card --}}
-        <div class="card bg-white shadow-sm mb-6">
-            <div class="card-body p-6">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <i class="fas fa-filter text-primary" aria-hidden="true"></i>
-                    <span>Filter Incidents</span>
-                </h2>
-
-                <form method="GET" action="{{ route('incidents.index') }}" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                        {{-- Municipality Filter - Dynamic from config --}}
-                        <div class="form-control">
-                            <label for="filter-municipality" class="label">
-                                <span class="label-text font-medium text-gray-700">Municipality</span>
-                            </label>
-                            <select name="municipality" id="filter-municipality" class="select select-bordered w-full focus:outline-primary min-h-[44px]">
-                                <option value="">All Municipalities</option>
-                                @foreach(array_keys(config('locations.municipalities')) as $municipality)
-                                    <option value="{{ $municipality }}" {{ request('municipality') == $municipality ? 'selected' : '' }}>
-                                        {{ $municipality }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        {{-- Severity Filter --}}
-                        <div class="form-control">
-                            <label for="filter-severity" class="label">
-                                <span class="label-text font-medium text-gray-700">Severity Level</span>
-                            </label>
-                            <select name="severity" id="filter-severity" class="select select-bordered w-full focus:outline-primary">
-                                <option value="">All Severities</option>
-                                <option value="critical" {{ request('severity') == 'critical' ? 'selected' : '' }}>Critical</option>
-                                <option value="high" {{ request('severity') == 'high' ? 'selected' : '' }}>High</option>
-                                <option value="medium" {{ request('severity') == 'medium' ? 'selected' : '' }}>Medium</option>
-                                <option value="low" {{ request('severity') == 'low' ? 'selected' : '' }}>Low</option>
-                            </select>
-                        </div>
-
-                        {{-- Status Filter --}}
-                        <div class="form-control">
-                            <label for="filter-status" class="label">
-                                <span class="label-text font-medium text-gray-700">Status</span>
-                            </label>
-                            <select name="status" id="filter-status" class="select select-bordered w-full focus:outline-primary">
-                                <option value="">All Statuses</option>
-                                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="resolved" {{ request('status') == 'resolved' ? 'selected' : '' }}>Resolved</option>
-                                <option value="closed" {{ request('status') == 'closed' ? 'selected' : '' }}>Closed</option>
-                            </select>
-                        </div>
-
-                        {{-- Incident Type Filter --}}
-                        <div class="form-control">
-                            <label for="filter-type" class="label">
-                                <span class="label-text font-medium text-gray-700">Incident Type</span>
-                            </label>
-                            <select name="incident_type" id="filter-type" class="select select-bordered w-full focus:outline-primary">
-                                <option value="">All Types</option>
-                                <option value="traffic_accident" {{ request('incident_type') == 'traffic_accident' ? 'selected' : '' }}>Traffic Accident</option>
-                                <option value="medical_emergency" {{ request('incident_type') == 'medical_emergency' ? 'selected' : '' }}>Medical Emergency</option>
-                                <option value="fire_incident" {{ request('incident_type') == 'fire_incident' ? 'selected' : '' }}>Fire Incident</option>
-                                <option value="natural_disaster" {{ request('incident_type') == 'natural_disaster' ? 'selected' : '' }}>Natural Disaster</option>
-                                <option value="criminal_activity" {{ request('incident_type') == 'criminal_activity' ? 'selected' : '' }}>Criminal Activity</option>
-                                <option value="other" {{ request('incident_type') == 'other' ? 'selected' : '' }}>Other</option>
-                            </select>
-                        </div>
-
-                        {{-- Filter Actions --}}
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium text-gray-700 opacity-0">Actions</span>
-                            </label>
-                            <div class="flex gap-2">
-                                <button type="submit" class="btn btn-primary gap-2 flex-1 min-h-[44px]">
-                                    <i class="fas fa-search" aria-hidden="true"></i>
-                                    <span>Apply</span>
-                                </button>
-                                <a href="{{ route('incidents.index') }}" class="btn btn-outline min-h-[44px] min-w-[44px]" aria-label="Clear all filters">
-                                    <i class="fas fa-times" aria-hidden="true"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Active Filters Display --}}
-                    @if(request()->hasAny(['municipality', 'severity', 'status', 'incident_type']))
-                    <div class="flex items-center gap-2 flex-wrap pt-2 border-t border-gray-200">
-                        <span class="text-sm font-medium text-gray-700">Active filters:</span>
-                        @if(request('municipality'))
-                            <span class="badge badge-primary gap-1">
-                                <span>{{ request('municipality') }}</span>
-                            </span>
-                        @endif
-                        @if(request('severity'))
-                            <span class="badge badge-warning gap-1">
-                                <span>{{ ucfirst(request('severity')) }} Severity</span>
-                            </span>
-                        @endif
-                        @if(request('status'))
-                            <span class="badge badge-info gap-1">
-                                <span>{{ ucfirst(request('status')) }}</span>
-                            </span>
-                        @endif
-                        @if(request('incident_type'))
-                            <span class="badge badge-neutral gap-1">
-                                <span>{{ ucwords(str_replace('_', ' ', request('incident_type'))) }}</span>
-                            </span>
-                        @endif
-                    </div>
-                    @endif
-                </form>
-            </div>
-        </div>
-
         {{-- Incidents Table Card --}}
         <div class="card bg-white shadow-lg">
             <div class="card-body p-0">
+                <div class="px-4 py-6 border-b border-gray-200">
+                    <div class="flex flex-row justify-between gap-6">
+                        <div class="flex-shrink-0">
+                            <h2 class="text-xl font-semibold text-gray-800">Incident Management</h2>
+                            <p class="text-sm text-gray-500 mt-2">
+                                Showing {{ $incidents->firstItem() ?? 0 }} to {{ $incidents->lastItem() ?? 0 }} of {{ number_format($incidents->total()) }} results
+                            </p>
+                        </div>
+                        <form method="GET" action="{{ route('incidents.index') }}" class="flex-shrink-0 lg:ml-auto">
+                            <div class="flex flex-wrap items-end gap-3">
+                                {{-- Search Input --}}
+                                <div class="form-control">
+                                    <label for="search" class="label">
+                                        <span class="label-text font-medium text-gray-700 my-1">Search</span>
+                                    </label>
+                                    <input type="text" name="search" id="search" value="{{ request('search') }}"
+                                           placeholder="Incident #, location, description..."
+                                           class="input input-bordered w-full focus:outline-primary min-h-[44px] focus:border-primary">
+                                </div>
+
+                                {{-- Municipality Filter (SuperAdmin Only) --}}
+                                @if(Auth::user()->isSuperAdmin())
+                                <div class="form-control">
+                                    <label for="municipality" class="label">
+                                        <span class="label-text font-medium text-gray-700 my-1">Municipality</span>
+                                    </label>
+                                    <select name="municipality" id="municipality" class="select select-bordered w-full focus:outline-primary min-h-[44px] focus:border-primary">
+                                        <option value="" {{ request('municipality') === '' ? 'selected' : '' }}>All Municipalities</option>
+                                        @foreach(array_keys(config('locations.municipalities')) as $municipality)
+                                            <option value="{{ $municipality }}" {{ request('municipality') === $municipality ? 'selected' : '' }}>
+                                                {{ $municipality }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @endif
+
+                                {{-- Incident Type Filter --}}
+                                <div class="form-control">
+                                    <label for="incident_type" class="label">
+                                        <span class="label-text font-medium text-gray-700 my-1">Incident Type</span>
+                                    </label>
+                                    <select name="incident_type" id="incident_type" class="select select-bordered w-full focus:outline-primary min-h-[44px] focus:border-primary">
+                                        <option value="" {{ request('incident_type') === '' ? 'selected' : '' }}>All Types</option>
+                                        <option value="traffic_accident" {{ request('incident_type') === 'traffic_accident' ? 'selected' : '' }}>Traffic Accident</option>
+                                        <option value="medical_emergency" {{ request('incident_type') === 'medical_emergency' ? 'selected' : '' }}>Medical Emergency</option>
+                                        <option value="fire_incident" {{ request('incident_type') === 'fire_incident' ? 'selected' : '' }}>Fire Incident</option>
+                                        <option value="natural_disaster" {{ request('incident_type') === 'natural_disaster' ? 'selected' : '' }}>Natural Disaster</option>
+                                        <option value="criminal_activity" {{ request('incident_type') === 'criminal_activity' ? 'selected' : '' }}>Criminal Activity</option>
+                                        <option value="other" {{ request('incident_type') === 'other' ? 'selected' : '' }}>Other</option>
+                                    </select>
+                                </div>
+
+                                {{-- Filter Actions --}}
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text font-medium text-gray-700 opacity-0">Actions</span>
+                                    </label>
+                                    <div class="flex gap-2">
+                                        <button type="submit" class="btn btn-primary gap-2 min-h-[44px] px-6">
+                                            <i class="fas fa-search" aria-hidden="true"></i>
+                                            <span>Apply</span>
+                                        </button>
+                                        <a href="{{ route('incidents.index') }}" class="btn btn-outline gap-2 min-h-[44px]" aria-label="Clear all filters">
+                                            <i class="fas fa-times" aria-hidden="true"></i>
+                                            <span>Clear</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Active Filters Display --}}
+                            @if(request('search') || request('municipality') || request('incident_type'))
+                            <div class="flex items-center gap-2 flex-wrap mt-3">
+                                <span class="text-sm font-medium text-gray-700">Active filters:</span>
+                                @if(request('search'))
+                                    <span class="badge badge-primary gap-1">
+                                        <span>Search: "{{ request('search') }}"</span>
+                                    </span>
+                                @endif
+                                @if(request('municipality'))
+                                    <span class="badge badge-secondary gap-1">
+                                        <span>{{ request('municipality') }}</span>
+                                    </span>
+                                @endif
+                                @if(request('incident_type'))
+                                    <span class="badge badge-info gap-1">
+                                        <span>{{ ucwords(str_replace('_', ' ', request('incident_type'))) }}</span>
+                                    </span>
+                                @endif
+                            </div>
+                            @endif
+                        </form>
+                    </div>
+                </div>
                 <div class="overflow-x-auto">
                     @if($incidents->count() > 0)
                         <table class="table table-zebra w-full">
@@ -257,6 +236,8 @@
                                             <span class="badge {{ $incident->severity_level === 'critical' ? 'badge-error' : ($incident->severity_level === 'high' ? 'badge-warning' : ($incident->severity_level === 'medium' ? 'badge-info' : 'badge-success')) }} badge-lg">
                                                 {{ ucfirst($incident->severity_level) }}
                                             </span>
+
+
                                         </td>
 
                                         {{-- Status Badge --}}
@@ -375,23 +356,24 @@
                             <i class="fas fa-inbox text-6xl text-gray-300 mb-4" aria-hidden="true"></i>
                             <h3 class="text-xl font-semibold text-gray-700 mb-2">No Incidents Found</h3>
                             <p class="text-gray-500 mb-6">
-                                @if(request()->hasAny(['municipality', 'severity', 'status', 'incident_type']))
+                                @if(request('search') || request('municipality') || request('incident_type'))
                                     No incidents match your current filters. Try adjusting your search criteria.
                                 @else
                                     There are no incidents to display. Start by reporting a new incident.
                                 @endif
                             </p>
                             <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                                @if(request()->hasAny(['municipality', 'severity', 'status', 'incident_type']))
+                                @if(request('search') || request('municipality') || request('incident_type'))
                                     <a href="{{ route('incidents.index') }}" class="btn btn-outline gap-2">
                                         <i class="fas fa-times" aria-hidden="true"></i>
                                         <span>Clear Filters</span>
                                     </a>
+                                @else
+                                    <a href="{{ route('incidents.create') }}" class="btn btn-primary gap-2">
+                                        <i class="fas fa-plus" aria-hidden="true"></i>
+                                        <span>Report New Incident</span>
+                                    </a>
                                 @endif
-                                <a href="{{ route('incidents.create') }}" class="btn btn-primary gap-2">
-                                    <i class="fas fa-plus" aria-hidden="true"></i>
-                                    <span>Report New Incident</span>
-                                </a>
                             </div>
                         </div>
                     @endif

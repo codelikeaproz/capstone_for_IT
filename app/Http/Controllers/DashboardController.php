@@ -45,105 +45,66 @@ class DashboardController extends Controller
         ));
     }
 
-    public function analytics(Request $request)
-    {
-        $user = Auth::user();
-
-        // Get filters
-        $municipality = $user->role === 'admin' ? $request->get('municipality') : $user->municipality;
-        $incidentType = $request->get('incident_type');
-        $severityLevel = $request->get('severity');
-        $vehicleType = $request->get('vehicle_type');
-        $dateRange = $request->get('date_range', '30');
-        $startDate = now()->subDays($dateRange);
-
-        // Chart Data with filters
-        $chartData = $this->getAnalyticsChartData($municipality, $incidentType, $severityLevel, $startDate);
-
-        // Advanced Analytics
-        $timeHeatmap = $this->getTimeBasedHeatmap($municipality, $incidentType, $startDate);
-        $responseMetrics = $this->getResponsePerformance($municipality, $startDate);
-        $monthComparison = $this->getMonthOverMonthComparison($municipality);
-
-        // Municipality Comparison (for admin)
-        $municipalityStats = $user->role === 'admin' ? $this->getMunicipalityComparison() : null;
-
-        // Get all filter options
-        $municipalities = $user->role === 'admin' ?
-            Incident::select('municipality')->distinct()->pluck('municipality') :
-            collect([$user->municipality]);
-
-        $incidentTypes = ['traffic_accident', 'medical_emergency', 'fire_incident', 'natural_disaster', 'criminal_activity', 'general_emergency'];
-        $severityLevels = ['critical', 'high', 'medium', 'low'];
-        $vehicleTypes = ['ambulance', 'fire_truck', 'rescue_vehicle', 'patrol_car', 'support_vehicle'];
-
-        return view('Analytics.Dashboard', compact(
-            'chartData', 'timeHeatmap', 'responseMetrics', 'monthComparison',
-            'municipalityStats', 'municipalities', 'incidentTypes', 'severityLevels',
-            'vehicleTypes', 'dateRange', 'municipality', 'incidentType', 'severityLevel'
-        ));
-    }
-    
     public function adminDashboard()
     {
         $stats = $this->getAdminStatistics();
         $systemHealth = $this->getSystemHealth();
         $municipalityPerformance = $this->getMunicipalityPerformance();
         $userActivity = $this->getUserActivity();
-        
+
         return view('User.Admin.AdminDashboard', compact(
             'stats', 'systemHealth', 'municipalityPerformance', 'userActivity'
         ));
     }
-    
+
     public function staffDashboard()
     {
         $user = Auth::user();
         $municipality = $user->municipality;
-        
+
         $stats = $this->getStaffStatistics($municipality);
         $myIncidents = $this->getMyIncidents($user->id);
         $myRequests = $this->getMyRequests($user->id);
         $teamActivity = $this->getTeamActivity($municipality);
-        
+
         return view('User.Staff.StaffDashBoard', compact(
             'stats', 'myIncidents', 'myRequests', 'teamActivity'
         ));
     }
-    
+
     public function responderDashboard(Request $request)
     {
         $user = Auth::user();
         $municipality = $user->municipality;
-        
+
         $stats = $this->getResponderStatistics($municipality);
         $activeIncidents = $this->getActiveIncidents($municipality);
         $myVehicle = $this->getMyVehicle($user->id);
         $nearbyIncidents = $this->getNearbyIncidents($municipality);
-        
+
         // Check if request is from mobile device
         if ($this->isMobileDevice($request)) {
             return view('MobileView.responder-dashboard', compact(
                 'stats', 'activeIncidents', 'myVehicle', 'nearbyIncidents'
             ));
         }
-        
+
         return view('User.Responder.RespondersDashBoard', compact(
             'stats', 'activeIncidents', 'myVehicle', 'nearbyIncidents'
         ));
     }
-    
+
     // Analytics Methods
     private function getCoreStatistics($municipality = null, $startDate = null)
     {
         $incidentQuery = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                                 ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate));
-        
+
         $vehicleQuery = Vehicle::when($municipality, fn($q) => $q->where('municipality', $municipality));
-        
+
         $requestQuery = CitizenRequest::when($municipality, fn($q) => $q->where('municipality', $municipality))
                                      ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate));
-        
+
         return [
             'incidents' => [
                 'total' => $incidentQuery->count(),
@@ -184,7 +145,7 @@ class DashboardController extends Controller
             ],
         ];
     }
-    
+
     private function getChartData($municipality = null, $startDate = null)
     {
         // Incident trends by day
@@ -194,31 +155,31 @@ class DashboardController extends Controller
                                  ->groupBy('date')
                                  ->orderBy('date')
                                  ->get();
-        
+
         // Severity distribution
         $severityData = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                                ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
                                ->selectRaw('severity_level, COUNT(*) as count')
                                ->groupBy('severity_level')
                                ->get();
-        
+
         // Incident types
         $typeData = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                            ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
                            ->selectRaw('incident_type, COUNT(*) as count')
                            ->groupBy('incident_type')
                            ->get();
-        
+
         // Response time analysis
         $responseTimeData = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                                    ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
                                    ->whereNotNull('response_time')
                                    ->selectRaw('AVG(EXTRACT(EPOCH FROM (response_time - incident_date))/60) as avg_response_time')
-                                   ->selectRaw('incident_date::date as date')
+                                   ->selectRaw('DATE(incident_date) as date')
                                    ->groupBy('date')
                                    ->orderBy('date')
                                    ->get();
-        
+
         return [
             'trends' => $incidentTrends,
             'severity' => $severityData,
@@ -226,7 +187,7 @@ class DashboardController extends Controller
             'response_times' => $responseTimeData,
         ];
     }
-    
+
     private function getRecentIncidents($municipality = null)
     {
         return Incident::with(['assignedStaff', 'assignedVehicle'])
@@ -235,7 +196,7 @@ class DashboardController extends Controller
                       ->take(10)
                       ->get();
     }
-    
+
     private function getRecentRequests($municipality = null)
     {
         return CitizenRequest::with('assignedStaff')
@@ -244,17 +205,17 @@ class DashboardController extends Controller
                             ->take(10)
                             ->get();
     }
-    
+
     private function getEmergencyAlerts($municipality = null)
     {
         $alerts = [];
-        
+
         // Critical incidents
         $criticalIncidents = Incident::where('severity_level', 'critical')
                                    ->whereIn('status', ['pending', 'active'])
                                    ->when($municipality, fn($q) => $q->where('municipality', $municipality))
                                    ->count();
-        
+
         if ($criticalIncidents > 0) {
             $alerts[] = [
                 'type' => 'critical',
@@ -262,13 +223,13 @@ class DashboardController extends Controller
                 'count' => $criticalIncidents,
             ];
         }
-        
+
         // Low fuel vehicles
         $lowFuelVehicles = Vehicle::where('current_fuel_level', '<', 25)
                                  ->where('status', '!=', 'out_of_service')
                                  ->when($municipality, fn($q) => $q->where('municipality', $municipality))
                                  ->count();
-        
+
         if ($lowFuelVehicles > 0) {
             $alerts[] = [
                 'type' => 'warning',
@@ -276,13 +237,13 @@ class DashboardController extends Controller
                 'count' => $lowFuelVehicles,
             ];
         }
-        
+
         // Overdue maintenance
         $overdueVehicles = Vehicle::where('next_maintenance_due', '<', now())
                                  ->where('status', '!=', 'maintenance')
                                  ->when($municipality, fn($q) => $q->where('municipality', $municipality))
                                  ->count();
-        
+
         if ($overdueVehicles > 0) {
             $alerts[] = [
                 'type' => 'info',
@@ -290,10 +251,10 @@ class DashboardController extends Controller
                 'count' => $overdueVehicles,
             ];
         }
-        
+
         return $alerts;
     }
-    
+
     private function getMunicipalityComparison()
     {
         return DB::table('incidents')
@@ -306,23 +267,23 @@ class DashboardController extends Controller
                 ->orderBy('total_incidents', 'desc')
                 ->get();
     }
-    
+
     // API Methods for real-time updates
     public function getStatistics(Request $request)
     {
         $municipality = $request->get('municipality');
         $dateRange = $request->get('date_range', 30);
         $startDate = now()->subDays($dateRange);
-        
+
         $stats = $this->getCoreStatistics($municipality, $startDate);
-        
+
         return response()->json($stats);
     }
-    
+
     public function getHeatmapData(Request $request)
     {
         $municipality = $request->get('municipality');
-        
+
         $incidents = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                             ->whereNotNull('latitude')
                             ->whereNotNull('longitude')
@@ -337,10 +298,10 @@ class DashboardController extends Controller
                                     'type' => $incident->incident_type,
                                 ];
                             });
-        
+
         return response()->json($incidents);
     }
-    
+
     private function getSeverityWeight($severity)
     {
         return match($severity) {
@@ -351,7 +312,7 @@ class DashboardController extends Controller
             default => 0.1
         };
     }
-    
+
     // Additional helper methods for specific dashboards
     private function getAdminStatistics()
     {
@@ -364,16 +325,16 @@ class DashboardController extends Controller
             'pending_requests' => CitizenRequest::where('status', 'pending')->count(),
         ];
     }
-    
+
     private function getMyIncidents($userId)
     {
         return Incident::where('assigned_staff_id', $userId)
                       ->whereIn('status', ['pending', 'active'])
-                      ->latest('incident_date') 
+                      ->latest('incident_date')
                       ->take(5)
                       ->get();
     }
-    
+
     private function getMyRequests($userId)
     {
         return CitizenRequest::where('assigned_staff_id', $userId)
@@ -382,12 +343,12 @@ class DashboardController extends Controller
                             ->take(5)
                             ->get();
     }
-    
+
     private function getMyVehicle($userId)
     {
         return Vehicle::where('assigned_driver_id', $userId)->first();
     }
-    
+
     private function getActiveIncidents($municipality)
     {
         return Incident::where('municipality', $municipality)
@@ -396,7 +357,7 @@ class DashboardController extends Controller
                       ->take(10)
                       ->get();
     }
-    
+
     private function getNearbyIncidents($municipality)
     {
         return Incident::where('municipality', $municipality)
@@ -405,17 +366,17 @@ class DashboardController extends Controller
                       ->whereNotNull('longitude')
                       ->get();
     }
-    
+
     private function getStaffStatistics($municipality)
     {
         return $this->getCoreStatistics($municipality, now()->subDays(30));
     }
-    
+
     private function getResponderStatistics($municipality)
     {
         return $this->getCoreStatistics($municipality, now()->subDays(7));
     }
-    
+
     private function getSystemHealth()
     {
         return [
@@ -428,12 +389,12 @@ class DashboardController extends Controller
                                       ->count(),
         ];
     }
-    
+
     private function getMunicipalityPerformance()
     {
         return $this->getMunicipalityComparison();
     }
-    
+
     private function getUserActivity()
     {
         return DB::table('activity_log')
@@ -443,7 +404,7 @@ class DashboardController extends Controller
                 ->take(15)
                 ->get();
     }
-    
+
     private function getTeamActivity($municipality)
     {
         // Get recent incidents assigned to the same municipality
@@ -478,151 +439,7 @@ class DashboardController extends Controller
         ];
     }
 
-    // Advanced Analytics Methods
 
-    private function getAnalyticsChartData($municipality = null, $incidentType = null, $severityLevel = null, $startDate = null)
-    {
-        $query = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
-                        ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
-                        ->when($severityLevel, fn($q) => $q->where('severity_level', $severityLevel))
-                        ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate));
-
-        // Incident trends by day
-        $incidentTrends = (clone $query)
-                         ->selectRaw('incident_date::date as date, COUNT(*) as count')
-                         ->groupBy('date')
-                         ->orderBy('date')
-                         ->get();
-
-        // Severity distribution
-        $severityData = (clone $query)
-                       ->selectRaw('severity_level, COUNT(*) as count')
-                       ->groupBy('severity_level')
-                       ->get();
-
-        // Incident types
-        $typeData = (clone $query)
-                   ->selectRaw('incident_type, COUNT(*) as count')
-                   ->groupBy('incident_type')
-                   ->get();
-
-        // Response time analysis
-        $responseTimeData = (clone $query)
-                           ->whereNotNull('response_time')
-                           ->selectRaw('AVG(EXTRACT(EPOCH FROM (response_time - incident_date))/60) as avg_response_time')
-                           ->selectRaw('incident_date::date as date')
-                           ->groupBy('date')
-                           ->orderBy('date')
-                           ->get();
-
-        return [
-            'trends' => $incidentTrends,
-            'severity' => $severityData,
-            'types' => $typeData,
-            'response_times' => $responseTimeData,
-        ];
-    }
-
-    private function getTimeBasedHeatmap($municipality = null, $incidentType = null, $startDate = null)
-    {
-        $incidents = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
-                            ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
-                            ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
-                            ->selectRaw('EXTRACT(HOUR FROM incident_date) as hour, EXTRACT(DOW FROM incident_date) as day_of_week, COUNT(*) as count')
-                            ->groupBy('hour', 'day_of_week')
-                            ->get();
-
-        // Initialize 24x7 grid (PostgreSQL DOW: 0=Sunday, 1=Monday, ..., 6=Saturday)
-        // Convert to match MySQL format (1=Sunday, 2=Monday, ..., 7=Saturday)
-        $heatmap = [];
-        for ($hour = 0; $hour < 24; $hour++) {
-            for ($day = 1; $day <= 7; $day++) {
-                $heatmap[$hour][$day] = 0;
-            }
-        }
-
-        // Fill with actual data (convert PostgreSQL DOW to MySQL format)
-        foreach ($incidents as $incident) {
-            $day = $incident->day_of_week + 1; // PostgreSQL 0-6 to MySQL 1-7
-            if ($day > 7) $day = 1; // Sunday wraps around
-            $heatmap[$incident->hour][$day] = $incident->count;
-        }
-
-        return $heatmap;
-    }
-
-    private function getResponsePerformance($municipality = null, $startDate = null)
-    {
-        // Get average response time by municipality
-        $municipalityPerformance = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
-                                          ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
-                                          ->whereNotNull('response_time')
-                                          ->selectRaw('municipality, AVG(EXTRACT(EPOCH FROM (response_time - incident_date))/60) as avg_response_time, COUNT(*) as total_incidents')
-                                          ->groupBy('municipality')
-                                          ->orderBy('avg_response_time', 'asc')
-                                          ->get();
-
-        // Resolution rate by municipality
-        $resolutionRate = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
-                                 ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
-                                 ->selectRaw('municipality')
-                                 ->selectRaw('COUNT(*) as total')
-                                 ->selectRaw('SUM(CASE WHEN status IN (\'resolved\', \'closed\') THEN 1 ELSE 0 END) as resolved')
-                                 ->selectRaw('ROUND((SUM(CASE WHEN status IN (\'resolved\', \'closed\') THEN 1 ELSE 0 END) / COUNT(*)) * 100, 1) as resolution_rate')
-                                 ->groupBy('municipality')
-                                 ->get();
-
-        return [
-            'response_times' => $municipalityPerformance,
-            'resolution_rates' => $resolutionRate,
-        ];
-    }
-
-    private function getMonthOverMonthComparison($municipality = null)
-    {
-        $currentMonth = now()->startOfMonth();
-        $previousMonth = now()->subMonth()->startOfMonth();
-        $previousMonthEnd = now()->subMonth()->endOfMonth();
-
-        // Current month stats
-        $currentStats = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
-                               ->where('created_at', '>=', $currentMonth)
-                               ->selectRaw('COUNT(*) as total')
-                               ->selectRaw('SUM(CASE WHEN severity_level = \'critical\' THEN 1 ELSE 0 END) as critical')
-                               ->selectRaw('SUM(CASE WHEN status IN (\'resolved\', \'closed\') THEN 1 ELSE 0 END) as resolved')
-                               ->first();
-
-        // Previous month stats
-        $previousStats = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
-                                ->whereBetween('created_at', [$previousMonth, $previousMonthEnd])
-                                ->selectRaw('COUNT(*) as total')
-                                ->selectRaw('SUM(CASE WHEN severity_level = \'critical\' THEN 1 ELSE 0 END) as critical')
-                                ->selectRaw('SUM(CASE WHEN status IN (\'resolved\', \'closed\') THEN 1 ELSE 0 END) as resolved')
-                                ->first();
-
-        // Calculate percentage changes
-        $totalChange = $previousStats->total > 0
-            ? round((($currentStats->total - $previousStats->total) / $previousStats->total) * 100, 1)
-            : 0;
-
-        $criticalChange = $previousStats->critical > 0
-            ? round((($currentStats->critical - $previousStats->critical) / $previousStats->critical) * 100, 1)
-            : 0;
-
-        $resolvedChange = $previousStats->resolved > 0
-            ? round((($currentStats->resolved - $previousStats->resolved) / $previousStats->resolved) * 100, 1)
-            : 0;
-
-        return [
-            'current' => $currentStats,
-            'previous' => $previousStats,
-            'changes' => [
-                'total' => $totalChange,
-                'critical' => $criticalChange,
-                'resolved' => $resolvedChange,
-            ]
-        ];
-    }
 
     // Helper method to detect mobile devices
     private function isMobileDevice($request)
@@ -630,5 +447,241 @@ class DashboardController extends Controller
         $userAgent = $request->header('User-Agent');
 
         return preg_match('/Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i', $userAgent);
+    }
+
+    // Advanced Analytics Dashboard
+    public function analytics(Request $request)
+    {
+        $user = Auth::user();
+        $municipality = $request->get('municipality', $user->role === 'admin' ? null : $user->municipality);
+
+        // Get filter parameters
+        $dateRange = $request->get('date_range', 30);
+        $incidentType = $request->get('incident_type', '');
+        $severityLevel = $request->get('severity', '');
+
+        // Date range
+        $startDate = now()->subDays($dateRange);
+        $endDate = now();
+
+        // Get filter options
+        $incidentTypes = Incident::distinct()->pluck('incident_type')->toArray();
+        $severityLevels = Incident::distinct()->pluck('severity_level')->toArray();
+        $municipalities = $user->role === 'admin' ? User::distinct()->whereNotNull('municipality')->pluck('municipality')->toArray() : [];
+
+        // Build base query with filters
+        $baseQuery = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
+                            ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
+                            ->when($severityLevel, fn($q) => $q->where('severity_level', $severityLevel))
+                            ->whereBetween('incident_date', [$startDate, $endDate]);
+
+        // Month-over-Month Comparison
+        $monthComparison = $this->getMonthComparison($municipality, $incidentType, $severityLevel);
+
+        // Chart Data
+        $chartData = $this->getAnalyticsChartData($municipality, $startDate, $endDate, $incidentType, $severityLevel);
+
+        // Time-based Heatmap
+        $timeHeatmap = $this->getTimeHeatmap($municipality, $startDate, $endDate, $incidentType, $severityLevel);
+
+        // Response Metrics (Admin only)
+        $responseMetrics = $user->role === 'admin' ? $this->getResponseMetrics($startDate, $endDate, $incidentType, $severityLevel) : ['response_times' => [], 'resolution_rates' => []];
+
+        // Municipality Stats (Admin only)
+        $municipalityStats = $user->role === 'admin' ? $this->getDetailedMunicipalityStats($startDate, $endDate, $incidentType, $severityLevel) : null;
+
+        return view('Analytics.Dashboard', compact(
+            'dateRange',
+            'incidentTypes',
+            'incidentType',
+            'severityLevels',
+            'severityLevel',
+            'municipalities',
+            'municipality',
+            'monthComparison',
+            'chartData',
+            'timeHeatmap',
+            'responseMetrics',
+            'municipalityStats'
+        ));
+    }
+
+    private function getMonthComparison($municipality, $incidentType, $severityLevel)
+    {
+        // Current month
+        $currentMonthStart = now()->startOfMonth();
+        $currentMonthEnd = now()->endOfMonth();
+
+        // Previous month
+        $previousMonthStart = now()->subMonth()->startOfMonth();
+        $previousMonthEnd = now()->subMonth()->endOfMonth();
+
+        $currentStats = DB::table('incidents')
+            ->when($municipality, fn($q) => $q->where('municipality', $municipality))
+            ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
+            ->when($severityLevel, fn($q) => $q->where('severity_level', $severityLevel))
+            ->whereBetween('incident_date', [$currentMonthStart, $currentMonthEnd])
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN severity_level = \'critical\' THEN 1 ELSE 0 END) as critical')
+            ->selectRaw('SUM(CASE WHEN status IN (\'resolved\', \'closed\') THEN 1 ELSE 0 END) as resolved')
+            ->first();
+
+        $previousStats = DB::table('incidents')
+            ->when($municipality, fn($q) => $q->where('municipality', $municipality))
+            ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
+            ->when($severityLevel, fn($q) => $q->where('severity_level', $severityLevel))
+            ->whereBetween('incident_date', [$previousMonthStart, $previousMonthEnd])
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN severity_level = \'critical\' THEN 1 ELSE 0 END) as critical')
+            ->selectRaw('SUM(CASE WHEN status IN (\'resolved\', \'closed\') THEN 1 ELSE 0 END) as resolved')
+            ->first();
+
+        // Calculate percentage changes
+        $changes = [
+            'total' => $previousStats->total > 0
+                ? round((($currentStats->total - $previousStats->total) / $previousStats->total) * 100)
+                : 0,
+            'critical' => $previousStats->critical > 0
+                ? round((($currentStats->critical - $previousStats->critical) / $previousStats->critical) * 100)
+                : 0,
+            'resolved' => $previousStats->resolved > 0
+                ? round((($currentStats->resolved - $previousStats->resolved) / $previousStats->resolved) * 100)
+                : 0,
+        ];
+
+        return [
+            'current' => $currentStats,
+            'previous' => $previousStats,
+            'changes' => $changes,
+        ];
+    }
+
+    private function getAnalyticsChartData($municipality, $startDate, $endDate, $incidentType, $severityLevel)
+    {
+        // Incident trends by day
+        $trends = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
+                        ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
+                        ->when($severityLevel, fn($q) => $q->where('severity_level', $severityLevel))
+                        ->whereBetween('incident_date', [$startDate, $endDate])
+                        ->selectRaw('DATE(incident_date) as date, COUNT(*) as count')
+                        ->groupBy('date')
+                        ->orderBy('date')
+                        ->get();
+
+        // Severity distribution
+        $severity = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
+                          ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
+                          ->when($severityLevel, fn($q) => $q->where('severity_level', $severityLevel))
+                          ->whereBetween('incident_date', [$startDate, $endDate])
+                          ->selectRaw('severity_level, COUNT(*) as count')
+                          ->groupBy('severity_level')
+                          ->get();
+
+        // Incident types
+        $types = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
+                       ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
+                       ->when($severityLevel, fn($q) => $q->where('severity_level', $severityLevel))
+                       ->whereBetween('incident_date', [$startDate, $endDate])
+                       ->selectRaw('incident_type, COUNT(*) as count')
+                       ->groupBy('incident_type')
+                       ->get();
+
+        // Response times
+        $responseTimes = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
+                               ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
+                               ->when($severityLevel, fn($q) => $q->where('severity_level', $severityLevel))
+                               ->whereBetween('incident_date', [$startDate, $endDate])
+                               ->whereNotNull('response_time')
+                               ->selectRaw('DATE(incident_date) as date')
+                               ->selectRaw('AVG(EXTRACT(EPOCH FROM (response_time - incident_date))/60) as avg_response_time')
+                               ->groupBy('date')
+                               ->orderBy('date')
+                               ->get();
+
+        return [
+            'trends' => $trends,
+            'severity' => $severity,
+            'types' => $types,
+            'response_times' => $responseTimes,
+        ];
+    }
+
+    private function getTimeHeatmap($municipality, $startDate, $endDate, $incidentType, $severityLevel)
+    {
+        $incidents = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
+                           ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
+                           ->when($severityLevel, fn($q) => $q->where('severity_level', $severityLevel))
+                           ->whereBetween('incident_date', [$startDate, $endDate])
+                           ->selectRaw('EXTRACT(HOUR FROM incident_date) as hour')
+                           ->selectRaw('EXTRACT(DOW FROM incident_date) as day_of_week')
+                           ->get();
+
+        // Initialize heatmap array
+        $heatmap = [];
+        for ($hour = 0; $hour < 24; $hour++) {
+            $heatmap[$hour] = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0, 6 => 0, 7 => 0];
+        }
+
+        // Populate heatmap
+        foreach ($incidents as $incident) {
+            $hour = (int) $incident->hour;
+            $day = (int) $incident->day_of_week;
+            // PostgreSQL DOW: Sunday = 0, convert to 1-7 where Sunday = 7
+            $day = $day == 0 ? 7 : $day;
+            $heatmap[$hour][$day]++;
+        }
+
+        return $heatmap;
+    }
+
+    private function getResponseMetrics($startDate, $endDate, $incidentType, $severityLevel)
+    {
+        // Average response time by municipality
+        $responseTimes = DB::table('incidents')
+            ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
+            ->when($severityLevel, fn($q) => $q->where('severity_level', $severityLevel))
+            ->whereBetween('incident_date', [$startDate, $endDate])
+            ->whereNotNull('response_time')
+            ->select('municipality')
+            ->selectRaw('AVG(EXTRACT(EPOCH FROM (response_time - incident_date))/60) as avg_response_time')
+            ->groupBy('municipality')
+            ->orderBy('avg_response_time')
+            ->get();
+
+        // Resolution rate by municipality
+        $resolutionRates = DB::table('incidents')
+            ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
+            ->when($severityLevel, fn($q) => $q->where('severity_level', $severityLevel))
+            ->whereBetween('incident_date', [$startDate, $endDate])
+            ->select('municipality')
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN status IN (\'resolved\', \'closed\') THEN 1 ELSE 0 END) as resolved')
+            ->groupBy('municipality')
+            ->get()
+            ->map(function($item) {
+                $item->resolution_rate = $item->total > 0 ? round(($item->resolved / $item->total) * 100, 1) : 0;
+                return $item;
+            });
+
+        return [
+            'response_times' => $responseTimes,
+            'resolution_rates' => $resolutionRates,
+        ];
+    }
+
+    private function getDetailedMunicipalityStats($startDate, $endDate, $incidentType, $severityLevel)
+    {
+        return DB::table('incidents')
+            ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
+            ->when($severityLevel, fn($q) => $q->where('severity_level', $severityLevel))
+            ->whereBetween('incident_date', [$startDate, $endDate])
+            ->select('municipality')
+            ->selectRaw('COUNT(*) as total_incidents')
+            ->selectRaw('SUM(CASE WHEN severity_level = \'critical\' THEN 1 ELSE 0 END) as critical_incidents')
+            ->selectRaw('SUM(CASE WHEN status IN (\'resolved\', \'closed\') THEN 1 ELSE 0 END) as resolved_incidents')
+            ->selectRaw('AVG(CASE WHEN response_time IS NOT NULL THEN EXTRACT(EPOCH FROM (response_time - incident_date))/60 END) as avg_response_time')
+            ->groupBy('municipality')
+            ->orderBy('total_incidents', 'desc')
+            ->get();
     }
 }

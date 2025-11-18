@@ -22,7 +22,8 @@
       "Bash(storage/framework/views/.gitignore)",
       "Bash(git push:*)",
       "Bash(git rm:*)",
-      "Bash(PRD_OLD.md)"
+      "Bash(PRD_OLD.md)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []

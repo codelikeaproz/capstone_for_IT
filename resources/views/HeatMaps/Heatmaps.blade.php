@@ -172,156 +172,79 @@
 @endpush
 
 @section('content')
-<div class="w-full px-4 py-6">
-    <!-- Page Header with Emergency Response Styling -->
-    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6 gap-4">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <i class="fas fa-map-marked-alt text-primary text-xl"></i>
-            </div>
-            <div>
-                <h1 class="text-2xl font-bold text-base-content">Emergency Heat Map</h1>
-                <p class="text-base-content/60 text-sm">Visual incident analysis for Maramag, Bukidnon</p>
-            </div>
-        </div>
-        <div class="flex gap-2">
-            <button class="btn btn-outline btn-sm" onclick="toggleFilters()">
-                <i class="fas fa-filter mr-1"></i>Filters
-            </button>
-            <button class="btn btn-primary btn-sm" onclick="refreshMap()">
-                <i class="fas fa-sync-alt mr-1"></i>Refresh
-            </button>
-        </div>
-    </div>
+<div class="min-h-screen bg-gray-50">
+    <div class="mx-auto px-2 sm:px-6 lg:px-6 py-6">
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="card bg-base-100 shadow-sm">
-            <div class="card-body p-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <i class="fas fa-exclamation-triangle text-primary"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="text-base-content/60 text-xs">Total Incidents</div>
-                        <div class="text-2xl font-bold text-base-content">{{ $totalIncidents ?? 0 }}</div>
-                    </div>
+        {{-- Page Header --}}
+        <header class="mb-6">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <i class="fas fa-map-marked-alt text-primary" aria-hidden="true"></i>
+                        <span>Emergency Heat Map</span>
+                    </h1>
+                    <p class="text-base text-gray-600 mt-1">Visual incident analysis and monitoring across Bukidnon</p>
                 </div>
-            </div>
-        </div>
-        <div class="card bg-base-100 shadow-sm">
-            <div class="card-body p-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-info/10 flex items-center justify-center">
-                        <i class="fas fa-clock text-info"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="text-base-content/60 text-xs">This Month</div>
-                        <div class="text-2xl font-bold text-base-content">{{ $monthlyIncidents ?? 0 }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card bg-base-100 shadow-sm">
-            <div class="card-body p-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center">
-                        <i class="fas fa-chart-area text-warning"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="text-base-content/60 text-xs">High Density Areas</div>
-                        <div class="text-2xl font-bold text-base-content">{{ $hotspots ?? 0 }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card bg-base-100 shadow-sm">
-            <div class="card-body p-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center">
-                        <i class="fas fa-map-pin text-success"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="text-base-content/60 text-xs">Mapped Locations</div>
-                        <div class="text-2xl font-bold text-base-content">{{ $mappedIncidents ?? 0 }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Filter Panel (Initially Hidden) -->
-    <div class="mb-6 hidden" id="filterPanel">
-        <div class="card bg-base-100 shadow-sm">
-            <div class="card-body">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg">
-                        <i class="fas fa-filter text-primary"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900">Filter Controls</h3>
-                        <p class="text-sm text-gray-500">Filter incidents by type, severity, and location</p>
-                    </div>
+                <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                    <button type="button" class="btn btn-success gap-2 w-full sm:w-auto min-h-[44px]" onclick="refreshMap()" aria-label="Refresh heat map">
+                        <i class="fas fa-redo" aria-hidden="true"></i>
+                        <span>Refresh</span>
+                    </button>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-semibold text-gray-700">Emergency Type</span>
-                        </label>
-                        <select class="select select-bordered w-full" id="incidentTypeFilter">
-                            <option value="">All Types</option>
-                            <option value="vehicle_vs_vehicle">Vehicle Collision</option>
-                            <option value="vehicle_vs_pedestrian">Vehicle vs Pedestrian</option>
-                            <option value="vehicle_vs_animals">Vehicle vs Animals</option>
-                            <option value="vehicle_vs_property">Vehicle vs Property</option>
-                            <option value="vehicle_alone">Single Vehicle</option>
-                            <option value="maternity">Medical Emergency</option>
-                            <option value="stabbing_shooting">Violence Emergency</option>
-                            <option value="transport_to_hospital">Medical Transport</option>
-                        </select>
+            </div>
+        </header>
+
+        {{-- Statistics Cards --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" role="region" aria-label="Heat map statistics">
+            {{-- Total Incidents --}}
+            <div class="stats shadow bg-white hover:shadow-lg transition-shadow">
+                <div class="stat">
+                    <div class="stat-figure text-primary">
+                        <i class="fas fa-exclamation-triangle text-4xl" aria-hidden="true"></i>
                     </div>
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-semibold text-gray-700">Severity Level</span>
-                        </label>
-                        <select class="select select-bordered w-full" id="severityFilter">
-                            <option value="">All Levels</option>
-                            <option value="minor">Minor</option>
-                            <option value="moderate">Moderate</option>
-                            <option value="severe">Severe</option>
-                            <option value="critical">Critical</option>
-                        </select>
+                    <div class="stat-title text-gray-600">Total Incidents</div>
+                    <div class="stat-value text-primary">{{ number_format($totalIncidents ?? 0) }}</div>
+                    <div class="stat-desc text-sm text-gray-500">Mapped locations</div>
+                </div>
+            </div>
+
+            {{-- This Month --}}
+            <div class="stats shadow bg-white hover:shadow-lg transition-shadow">
+                <div class="stat">
+                    <div class="stat-figure text-info">
+                        <i class="fas fa-calendar-alt text-4xl" aria-hidden="true"></i>
                     </div>
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-semibold text-gray-700">Municipality</span>
-                        </label>
-                        <select name="municipality" id="municipalityFilter" class="select select-bordered w-full">
-                            <option value="">All Municipalities</option>
-                            @foreach(config('locations.municipalities') as $municipality => $value)
-                                <option value="{{ $municipality }}">{{ $municipality }}</option>
-                            @endforeach
-                        </select>
+                    <div class="stat-title text-gray-600">This Month</div>
+                    <div class="stat-value text-info">{{ number_format($monthlyIncidents ?? 0) }}</div>
+                    <div class="stat-desc text-sm text-gray-500">Recent activity</div>
+                </div>
+            </div>
+
+            {{-- High Density Areas --}}
+            <div class="stats shadow bg-white hover:shadow-lg transition-shadow">
+                <div class="stat">
+                    <div class="stat-figure text-warning">
+                        <i class="fas fa-chart-area text-4xl" aria-hidden="true"></i>
                     </div>
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-semibold text-gray-700">Actions</span>
-                        </label>
-                        <div class="flex gap-2">
-                            <button class="btn btn-primary flex-1 gap-2" onclick="applyFilters()">
-                                <i class="fas fa-search"></i>
-                                Apply
-                            </button>
-                            <button class="btn btn-outline flex-1 gap-2" onclick="clearFilters()">
-                                <i class="fas fa-times"></i>
-                                Clear
-                            </button>
-                        </div>
+                    <div class="stat-title text-gray-600">High Density Areas</div>
+                    <div class="stat-value text-warning">{{ number_format($hotspots ?? 0) }}</div>
+                    <div class="stat-desc text-sm text-gray-500">Hotspot zones</div>
+                </div>
+            </div>
+
+            {{-- Mapped Locations --}}
+            <div class="stats shadow bg-white hover:shadow-lg transition-shadow">
+                <div class="stat">
+                    <div class="stat-figure text-success">
+                        <i class="fas fa-map-pin text-4xl" aria-hidden="true"></i>
                     </div>
+                    <div class="stat-title text-gray-600">Mapped Locations</div>
+                    <div class="stat-value text-success">{{ number_format($mappedIncidents ?? 0) }}</div>
+                    <div class="stat-desc text-sm text-gray-500">With coordinates</div>
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- Main Map Container -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -409,67 +332,131 @@
 
     <!-- Recent Incidents Table -->
     <div class="w-full">
-        <!-- Table Card -->
-        <div class="card bg-base-100 shadow-sm">
+        {{-- Main Table Card --}}
+        <div class="card bg-white shadow-lg">
             <div class="card-body p-0">
-                <div class="flex justify-between items-center p-4 border-b border-base-300">
-                    <div class="flex items-center gap-3">
-                        <div class="flex items-center justify-center w-10 h-10 bg-info/10 rounded-lg">
-                            <i class="fas fa-table text-info"></i>
-                        </div>
-                        <div>
-                            <h6 class="text-lg font-semibold text-gray-900">Recent Incidents on Map</h6>
-                            <p class="text-sm text-gray-500">
+                <div class="px-4 py-6 border-b border-gray-200">
+                    <div class="flex flex-row justify-between gap-6">
+                        <div class="flex-shrink-0">
+                            <h2 class="text-xl font-semibold text-gray-800">Recent Incidents on Map</h2>
+                            <p class="text-sm text-gray-500 mt-2">
                                 @if(isset($recentIncidents) && method_exists($recentIncidents, 'total'))
-                                    Showing {{ $recentIncidents->firstItem() ?? 0 }} to {{ $recentIncidents->lastItem() ?? 0 }} of {{ $recentIncidents->total() }} incidents
+                                    Showing {{ $recentIncidents->firstItem() ?? 0 }} to {{ $recentIncidents->lastItem() ?? 0 }} of {{ number_format($recentIncidents->total()) }} results
                                 @else
                                     {{ isset($recentIncidents) ? $recentIncidents->count() : 0 }} incidents
                                 @endif
                             </p>
                         </div>
+                        <form method="GET" action="{{ route('heatmaps') }}" class="flex-shrink-0 lg:ml-auto">
+                            <div class="flex flex-wrap items-end gap-3">
+                                {{-- Search Input --}}
+                                <div class="form-control">
+                                    <label for="search" class="label">
+                                        <span class="label-text font-medium text-gray-700 my-1">Search</span>
+                                    </label>
+                                    <input type="text" name="search" id="search" value="{{ request('search') }}"
+                                           placeholder="Incident #, location..."
+                                           class="input input-bordered w-full focus:outline-primary min-h-[44px] focus:border-primary">
+                                </div>
+
+                                {{-- Emergency Type (Incident Type) Filter --}}
+                                <div class="form-control">
+                                    <label for="incident_type" class="label">
+                                        <span class="label-text font-medium text-gray-700 my-1">Emergency Type</span>
+                                    </label>
+                                    <select name="incident_type" id="incident_type" class="select select-bordered w-full focus:outline-primary min-h-[44px] focus:border-primary">
+                                        <option value="" {{ request('incident_type') === '' ? 'selected' : '' }}>All Types</option>
+                                        <option value="vehicle_vs_vehicle" {{ request('incident_type') === 'vehicle_vs_vehicle' ? 'selected' : '' }}>Vehicle Collision</option>
+                                        <option value="vehicle_vs_pedestrian" {{ request('incident_type') === 'vehicle_vs_pedestrian' ? 'selected' : '' }}>Vehicle vs Pedestrian</option>
+                                        <option value="vehicle_vs_animals" {{ request('incident_type') === 'vehicle_vs_animals' ? 'selected' : '' }}>Vehicle vs Animals</option>
+                                        <option value="vehicle_vs_property" {{ request('incident_type') === 'vehicle_vs_property' ? 'selected' : '' }}>Vehicle vs Property</option>
+                                        <option value="vehicle_alone" {{ request('incident_type') === 'vehicle_alone' ? 'selected' : '' }}>Single Vehicle</option>
+                                        <option value="maternity" {{ request('incident_type') === 'maternity' ? 'selected' : '' }}>Medical Emergency</option>
+                                        <option value="stabbing_shooting" {{ request('incident_type') === 'stabbing_shooting' ? 'selected' : '' }}>Violence Emergency</option>
+                                        <option value="transport_to_hospital" {{ request('incident_type') === 'transport_to_hospital' ? 'selected' : '' }}>Medical Transport</option>
+                                    </select>
+                                </div>
+
+                                {{-- Municipality Filter (SuperAdmin Only) --}}
+                                @if(Auth::user()->isSuperAdmin())
+                                <div class="form-control">
+                                    <label for="municipality" class="label">
+                                        <span class="label-text font-medium text-gray-700 my-1">Municipality</span>
+                                    </label>
+                                    <select name="municipality" id="municipality" class="select select-bordered w-full focus:outline-primary min-h-[44px] focus:border-primary">
+                                        <option value="" {{ request('municipality') === '' ? 'selected' : '' }}>All Municipalities</option>
+                                        @foreach(config('locations.municipalities') as $municipality => $value)
+                                            <option value="{{ $municipality }}" {{ request('municipality') === $municipality ? 'selected' : '' }}>
+                                                {{ $municipality }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @endif
+
+                                {{-- Filter Actions --}}
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text font-medium text-gray-700 opacity-0">Actions</span>
+                                    </label>
+                                    <div class="flex gap-2">
+                                        <button type="submit" class="btn btn-primary gap-2 min-h-[44px] px-6">
+                                            <i class="fas fa-search" aria-hidden="true"></i>
+                                            <span>Apply</span>
+                                        </button>
+                                        <a href="{{ route('heatmaps') }}" class="btn btn-outline gap-2 min-h-[44px]" aria-label="Clear all filters">
+                                            <i class="fas fa-times" aria-hidden="true"></i>
+                                            <span>Clear</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Active Filters Display --}}
+                            @if(request('search') || request('municipality') || request('incident_type'))
+                            <div class="flex items-center gap-2 flex-wrap mt-3">
+                                <span class="text-sm font-medium text-gray-700">Active filters:</span>
+                                @if(request('search'))
+                                    <span class="badge badge-primary gap-1">
+                                        <span>Search: "{{ request('search') }}"</span>
+                                    </span>
+                                @endif
+                                @if(request('municipality'))
+                                    <span class="badge badge-secondary gap-1">
+                                        <span>{{ request('municipality') }}</span>
+                                    </span>
+                                @endif
+                                @if(request('incident_type'))
+                                    <span class="badge badge-info gap-1">
+                                        <span>{{ ucwords(str_replace('_', ' ', request('incident_type'))) }}</span>
+                                    </span>
+                                @endif
+                            </div>
+                            @endif
+                        </form>
                     </div>
-                    <a href="#" class="btn btn-primary btn-sm gap-2">
-                        <i class="fas fa-external-link-alt"></i>
-                        View All
-                    </a>
                 </div>
                 <div class="overflow-x-auto">
                     @if(isset($recentIncidents) && $recentIncidents->count() > 0)
                         <table class="table table-zebra w-full">
                             <thead class="bg-gray-100">
                                 <tr>
-                                    <th class="font-semibold text-gray-700">
-                                        <i class="fas fa-hashtag mr-1 text-gray-600"></i>
-                                        Incident #
-                                    </th>
-                                    <th class="font-semibold text-gray-700">
-                                        <i class="fas fa-tag mr-1 text-gray-600"></i>
-                                        Type
-                                    </th>
-                                    <th class="font-semibold text-gray-700">
-                                        <i class="fas fa-map-marker-alt mr-1 text-gray-600"></i>
-                                        Location
-                                    </th>
-                                    <th class="font-semibold text-gray-700">
-                                        <i class="fas fa-exclamation-triangle mr-1 text-gray-600"></i>
-                                        Severity
-                                    </th>
-                                    <th class="font-semibold text-gray-700">
-                                        <i class="fas fa-calendar mr-1 text-gray-600"></i>
-                                        Date
-                                    </th>
-                                    <th class="font-semibold text-gray-700">
-                                        <i class="fas fa-info-circle mr-1 text-gray-600"></i>
-                                        Status
-                                    </th>
+                                    <th class="font-semibold text-gray-700">Incident #</th>
+                                    <th class="font-semibold text-gray-700">Emergency Type</th>
+                                    <th class="font-semibold text-gray-700">Location</th>
+                                    <th class="font-semibold text-gray-700">Date & Time</th>
+                                    <th class="font-semibold text-gray-700">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($recentIncidents as $incident)
-                                <tr class="incident-row hover:bg-primary/5 cursor-pointer transition-colors" onclick="centerMapOnIncident({{ $incident->latitude }}, {{ $incident->longitude }})">
+                                <tr class="hover cursor-pointer" data-incident-id="{{ $incident->id }}" onclick="centerMapOnIncident({{ $incident->latitude }}, {{ $incident->longitude }})">
+                                    {{-- Incident Number --}}
                                     <td>
-                                        <span class="font-mono font-semibold text-primary">{{ $incident->incident_number }}</span>
+                                        <span class="font-mono font-bold text-primary text-base">{{ $incident->incident_number }}</span>
                                     </td>
+
+                                    {{-- Emergency Type --}}
                                     <td>
                                         @php
                                             $typeColors = [
@@ -484,100 +471,102 @@
                                             ];
                                             $badgeColor = $typeColors[$incident->incident_type] ?? 'badge-ghost';
                                         @endphp
-                                        <span class="badge {{ $badgeColor }} badge-sm gap-1">
-                                            <i class="fas fa-exclamation-circle"></i>
+                                        <span class="badge {{ $badgeColor }} gap-1">
                                             {{ ucwords(str_replace('_', ' ', $incident->incident_type)) }}
                                         </span>
                                     </td>
-                                    <td class="text-gray-700">
-                                        <div class="flex items-center gap-2">
-                                            <i class="fas fa-location-dot text-gray-400"></i>
-                                            <span>{{ $incident->location }}</span>
+
+                                    {{-- Location --}}
+                                    <td>
+                                        <div class="text-sm text-gray-700">
+                                            <div class="font-medium">{{ Str::limit($incident->location, 40) }}</div>
+                                            @if($incident->municipality)
+                                                <div class="text-xs text-gray-500">{{ $incident->municipality }}</div>
+                                            @endif
                                         </div>
                                     </td>
+
+                                    {{-- Date & Time --}}
                                     <td>
-                                        @switch($incident->severity_level)
-                                            @case('minor')
-                                                <span class="badge badge-info gap-1">
-                                                    <i class="fas fa-circle"></i>
-                                                    Minor
-                                                </span>
-                                                @break
-                                            @case('moderate')
-                                                <span class="badge badge-primary gap-1">
-                                                    <i class="fas fa-circle"></i>
-                                                    Moderate
-                                                </span>
-                                                @break
-                                            @case('severe')
-                                                <span class="badge badge-warning gap-1">
-                                                    <i class="fas fa-circle"></i>
-                                                    Severe
-                                                </span>
-                                                @break
-                                            @case('critical')
-                                                <span class="badge badge-error gap-1">
-                                                    <i class="fas fa-circle"></i>
-                                                    Critical
-                                                </span>
-                                                @break
-                                        @endswitch
-                                    </td>
-                                    <td class="text-gray-700">
-                                        <div class="flex items-center gap-2">
-                                            <i class="fas fa-clock text-gray-400"></i>
-                                            <span>{{ $incident->incident_date ? $incident->incident_date->timezone('Asia/Manila')->format('M j, Y g:i A') : 'N/A' }}</span>
+                                        <div class="text-sm text-gray-700">
+                                            @if($incident->incident_date)
+                                                <div class="font-medium">{{ $incident->incident_date->timezone('Asia/Manila')->format('M d, Y') }}</div>
+                                                <div class="text-xs text-gray-500">{{ $incident->incident_date->timezone('Asia/Manila')->format('h:i A') }}</div>
+                                            @else
+                                                <span class="text-gray-400 italic">N/A</span>
+                                            @endif
                                         </div>
                                     </td>
+
+                                    {{-- Status --}}
                                     <td>
-                                        @switch($incident->status)
-                                            @case('pending')
-                                                <span class="badge badge-warning gap-1">
-                                                    <i class="fas fa-clock"></i>
-                                                    Pending
-                                                </span>
-                                                @break
-                                            @case('responding')
-                                                <span class="badge badge-info gap-1">
-                                                    <i class="fas fa-truck-medical"></i>
-                                                    Responding
-                                                </span>
-                                                @break
-                                            @case('resolved')
-                                                <span class="badge badge-success gap-1">
-                                                    <i class="fas fa-check-circle"></i>
-                                                    Resolved
-                                                </span>
-                                                @break
-                                            @case('closed')
-                                                <span class="badge badge-ghost gap-1">
-                                                    <i class="fas fa-archive"></i>
-                                                    Closed
-                                                </span>
-                                                @break
-                                        @endswitch
+                                        <div class="flex items-center gap-2">
+                                            @switch($incident->status)
+                                                @case('pending')
+                                                    <i class="fas fa-clock text-warning" aria-hidden="true"></i>
+                                                    @break
+                                                @case('responding')
+                                                    <i class="fas fa-truck-medical text-info" aria-hidden="true"></i>
+                                                    @break
+                                                @case('resolved')
+                                                    <i class="fas fa-check-circle text-success" aria-hidden="true"></i>
+                                                    @break
+                                                @case('closed')
+                                                    <i class="fas fa-archive text-gray-500" aria-hidden="true"></i>
+                                                    @break
+                                            @endswitch
+                                            @switch($incident->status)
+                                                @case('pending')
+                                                    <span class="badge badge-warning">Pending</span>
+                                                    @break
+                                                @case('responding')
+                                                    <span class="badge badge-info">Responding</span>
+                                                    @break
+                                                @case('resolved')
+                                                    <span class="badge badge-success">Resolved</span>
+                                                    @break
+                                                @case('closed')
+                                                    <span class="badge badge-ghost">Closed</span>
+                                                    @break
+                                                @default
+                                                    <span class="badge badge-ghost">{{ ucfirst($incident->status) }}</span>
+                                            @endswitch
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach
                             </tbody>
                         </table>
+                        {{-- Pagination --}}
+                        @if($recentIncidents->hasPages())
+                            <div class="border-t border-gray-200 px-6 py-4">
+                                {{ $recentIncidents->links() }}
+                            </div>
+                        @endif
                     @else
-                        <div class="text-center py-12">
-                            <i class="fas fa-map-marker-alt text-gray-300 text-6xl mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-600 mb-2">No Incidents Found</h3>
-                            <p class="text-gray-500">No incidents with location data are available at this time.</p>
+                        {{-- Empty State --}}
+                        <div class="text-center py-16 px-4">
+                            <i class="fas fa-map-marker-alt text-6xl text-gray-300 mb-4" aria-hidden="true"></i>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">No Incidents Found</h3>
+                            <p class="text-gray-500 mb-6">
+                                @if(request('search') || request('municipality') || request('incident_type'))
+                                    No incidents match your current filters. Try adjusting your search criteria.
+                                @else
+                                    No incidents with location data are available at this time.
+                                @endif
+                            </p>
+                            @if(request('search') || request('municipality') || request('incident_type'))
+                                <a href="{{ route('heatmaps') }}" class="btn btn-outline gap-2">
+                                    <i class="fas fa-times" aria-hidden="true"></i>
+                                    <span>Clear Filters</span>
+                                </a>
+                            @endif
                         </div>
                     @endif
                 </div>
-
-                <!-- Pagination -->
-                @if(isset($recentIncidents) && method_exists($recentIncidents, 'hasPages') && $recentIncidents->hasPages())
-                <div class="p-4 border-t border-base-300 bg-white">
-                    {{ $recentIncidents->links() }}
-                </div>
-                @endif
             </div>
         </div>
+    </div>
     </div>
 </div>
 
@@ -836,11 +825,6 @@ function centerMapOnIncident(lat, lng) {
     map.setView([lat, lng], 16);
 }
 
-function toggleFilters() {
-    const panel = document.getElementById('filterPanel');
-    panel.classList.toggle('hidden');
-}
-
 function refreshMap() {
     location.reload();
 }
@@ -849,29 +833,6 @@ function updateMapInfo() {
     document.getElementById('mapZoom').textContent = map.getZoom();
     const center = map.getCenter();
     document.getElementById('mapCenter').textContent = `${center.lat.toFixed(4)}, ${center.lng.toFixed(4)}`;
-}
-
-function applyFilters() {
-    const incidentType = document.getElementById('incidentTypeFilter').value;
-    const severity = document.getElementById('severityFilter').value;
-    const municipality = document.getElementById('municipalityFilter').value;
-
-    // TODO: Implement actual filtering logic here
-    // For now, just show a toast notification
-    showSuccessToast('Filters applied successfully');
-
-    console.log('Applied filters:', {
-        incidentType,
-        severity,
-        municipality
-    });
-}
-
-function clearFilters() {
-    document.getElementById('incidentTypeFilter').value = '';
-    document.getElementById('severityFilter').value = '';
-    document.getElementById('municipalityFilter').value = '';
-    showInfoToast('Filters cleared');
 }
 
 // Initialize map when page loads

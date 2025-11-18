@@ -29,102 +29,85 @@
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
-    <!-- Navbar -->
-    {{-- <nav class="bg-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 flex items-center">
-                        <img src="{{ asset('img/logo.png') }}" alt="MDRRMO Logo" class="w-8 h-8 mr-2" loading="lazy">
-                        <span class="text-xl font-bold text-gray-800">MDRRMO</span>
-                    </div>
-                </div>
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-center space-x-4">
-                        <a href="#" class="text-gray-700 hover:text-brick-orange px-3 py-2 text-sm font-medium">Home</a>
-                        <a href="#" class="text-gray-700 hover:text-brick-orange px-3 py-2 text-sm font-medium">About</a>
-                        <a href="#" class="text-gray-700 hover:text-brick-orange px-3 py-2 text-sm font-medium">Contact</a>
-                    </div>
-                </div>
-                <div class="-mr-2 flex md:hidden">
-                    <button type="button" id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-brick-orange focus:outline-none">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-            </div>
-        </div> --}}
-
-        <!-- Mobile menu -->
-        {{-- <div class="md:hidden hidden" id="mobile-menu">
-            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="#" class="text-gray-700 hover:text-brick-orange block px-3 py-2 text-base font-medium">Home</a>
-                <a href="#" class="text-gray-700 hover:text-brick-orange block px-3 py-2 text-base font-medium">About</a>
-                <a href="#" class="text-gray-700 hover:text-brick-orange block px-3 py-2 text-base font-medium">Contact</a>
-            </div>
-        </div>
-    </nav> --}}
-
     <!-- Main Content -->
     <main class="flex-grow flex items-center justify-center p-4">
         <div class="w-full max-w-md space-y-8">
-            <!-- Success/Error Messages -->
-            @if(session('success'))
-                <div class="alert alert-success mb-4">
-                    <i class="fas fa-check-circle mr-2"></i>
-                    {{ session('success') }}
-                </div>
-            @endif
-            
-            @if($errors->any())
-                <div class="alert alert-error mb-4">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    @foreach($errors->all() as $error)
-                        <div>{{ $error }}</div>
-                    @endforeach
-                </div>
-            @endif
-
-            <form class="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" action="{{ route('login.post') }}" method="POST">
+            <form class="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md w-full" action="{{ route('login.post') }}" method="POST">
                 @csrf
-                <div class="text-center flex flex-col items-center justify-center">
-                    <img src="{{ asset('img/logo.png') }}" alt="BukidnonAlert Logo" class="w-17 h-17 mx-auto" loading="lazy">
-                    <h2 class="mt-4 text-3xl font-extrabold text-gray-900">BukidnonAlert</h2>
-                    <p class="mt-2 text-sm text-gray-600">Emergency Response Management System</p>
+                <div class="text-center flex flex-col items-center justify-center mb-8">
+                    <img src="{{ asset('img/logo.png') }}" alt="BukidnonAlert Logo" class="w-20 h-20 mx-auto mb-4" loading="lazy">
+                    <h2 class="text-3xl font-extrabold text-gray-900 mb-3">BukidnonAlert</h2>
+                    <p class="text-sm text-gray-600">Emergency Response Management System</p>
                 </div>
-                
-                <div class="rounded-md shadow-sm space-y-4">
-                    <div>
-                        <label for="email" class="sr-only">Email address</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-envelope text-gray-400"></i>
-                            </div>
-                            <input id="email" name="email" type="email" autocomplete="email" required value="{{ old('email') }}"
-                                   class="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-brick-orange focus:border-brick-orange sm:text-sm hover:border-brick-orange transition-colors duration-200 input-field @error('email') border-red-500 @enderror"
-                                   placeholder="admin@bukidnonalert.gov.ph">
-                        </div>
-                        @error('email')
+
+                <div class="w-full space-y-5">
+                    {{-- Email/Username Input field with icon and validator --}}
+                    <div class="w-full">
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+                            Email or Username
+                        </label>
+                        <label class="input validator input-primary w-full">
+                            <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </g>
+                            </svg>
+                            <input
+                                id="username"
+                                name="username"
+                                type="text"
+                                required
+                                placeholder="Enter your email or username"
+                                pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}|[A-Za-z][A-Za-z0-9\-]*"
+                                minlength="3"
+                                title="Enter a valid email address or username"
+                                value="{{ old('username') }}"
+                                class="w-full"
+                            />
+                        </label>
+                        <p class="validator-hint hidden text-xs text-gray-500 mt-1">
+                            Enter a valid email address (e.g., user@example.com) or username (3-30 characters)
+                        </p>
+                        @error('username')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
-                    
-                    <div>
-                        <label for="password" class="sr-only">Password</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-lock text-gray-400"></i>
-                            </div>
-                            <input id="password" name="password" type="password" autocomplete="current-password" required
-                                   class="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-brick-orange focus:border-brick-orange sm:text-sm hover:border-brick-orange transition-colors duration-200 input-field @error('password') border-red-500 @enderror"
-                                   placeholder="Enter your password">
-                        </div>
+
+                    {{-- Password Input field with icon and validator --}}
+                    <div class="w-full">
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                            Password
+                        </label>
+                        <label class="input validator input-primary w-full">
+                            <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <g stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" fill="none" stroke="currentColor">
+                                    <path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"></path>
+                                    <circle cx="16.5" cy="7.5" r=".5" fill="currentColor"></circle>
+                                </g>
+                            </svg>
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                required
+                                placeholder="Enter your password"
+                                minlength="6"
+                                pattern="[A-Za-z0-9@#$%^&+=!]{6,}"
+                                title="Must be at least 6 characters containing letters, numbers, or special characters"
+                                class="w-full"
+                            />
+                        </label>
+                        <p class="validator-hint hidden text-xs text-gray-500 mt-1">
+                            Must be at least 6 characters containing letters, numbers, or special characters
+                        </p>
                         @error('password')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between pt-2">
                     <div class="flex items-center">
                         <input id="remember" name="remember" type="checkbox"
                                class="h-4 w-4 text-brick-orange focus:ring-brick-orange border-gray-300 rounded">
@@ -136,7 +119,7 @@
                     </div>
                 </div>
 
-                <div>
+                <div class="pt-2">
                     <button type="submit"
                             class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-brick-orange hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brick-orange transition-colors duration-200 btn-hover">
                         <span class="absolute left-0 inset-y-0 flex items-center pl-3">
@@ -146,12 +129,12 @@
                     </button>
                 </div>
 
-                <!-- Demo Credentials -->
-                <div class="bg-gray-50 p-4 rounded-md">
-                    <h3 class="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
-                    <div class="text-xs text-gray-600 space-y-1">
-                       
-                    </div>
+                <!-- Contact Admin -->
+                <div class="bg-gray-50 p-4 rounded-md text-center">
+                    <p class="text-sm text-gray-600">
+                        Don't have an account?
+                        <span class="font-medium text-gray-700">Contact your Administrator</span>
+                    </p>
                 </div>
             </form>
         </div>
@@ -180,22 +163,65 @@
     </footer> --}}
 
     <script>
-        // Mobile menu toggle
-        document.getElementById('mobile-menu-button').addEventListener('click', function() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
+        // Toast notification functions
+        function showSuccessToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-end z-[9999]';
+            toast.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        function showErrorToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-end z-[9999]';
+            toast.innerHTML = `
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        // Auto-display session messages as toasts
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                showSuccessToast("{{ session('success') }}");
+            @endif
+
+            @if($errors->any())
+                @foreach($errors->all() as $error)
+                    showErrorToast("{{ $error }}");
+                @endforeach
+            @endif
         });
 
         // Form validation
         document.querySelector('form').addEventListener('submit', function(e) {
-            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
 
-            if (!email || !password) {
+            if (!username || !password) {
                 e.preventDefault();
-                alert('Please fill in all fields');
+                showErrorToast('Please fill in all fields');
             }
-            // You can add more validation here if needed
         });
     </script>
 </body>
