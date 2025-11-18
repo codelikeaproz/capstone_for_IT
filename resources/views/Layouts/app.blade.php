@@ -184,7 +184,7 @@
         // Global toast notification functions
         function showSuccessToast(message) {
             const toast = document.createElement('div');
-            toast.className = 'toast  toast-end z-[9999]';
+            toast.className = 'toast toast-end z-[9999]';
             toast.innerHTML = `
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle"></i>
@@ -202,7 +202,7 @@
 
         function showInfoToast(message) {
             const toast = document.createElement('div');
-            toast.className = 'toast  toast-end z-[9999]';
+            toast.className = 'toast toast-end z-[9999]';
             toast.innerHTML = `
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
@@ -218,11 +218,27 @@
             }, 3000);
         }
 
+        function showWarningToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-end z-[9999]';
+            toast.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
 
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 3000);
+        }
 
         function showErrorToast(message) {
             const toast = document.createElement('div');
-            toast.className = 'toast  toast-end z-[9999]';
+            toast.className = 'toast toast-end z-[9999]';
             toast.innerHTML = `
                 <div class="alert alert-error">
                     <i class="fas fa-exclamation-circle"></i>
@@ -237,6 +253,25 @@
                 }
             }, 3000);
         }
+
+        // Auto-display Laravel session flash messages on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                showSuccessToast("{{ session('success') }}");
+            @endif
+
+            @if(session('error'))
+                showErrorToast("{{ session('error') }}");
+            @endif
+
+            @if(session('warning'))
+                showWarningToast("{{ session('warning') }}");
+            @endif
+
+            @if(session('info'))
+                showInfoToast("{{ session('info') }}");
+            @endif
+        });
     </script>
 
     @stack('scripts')

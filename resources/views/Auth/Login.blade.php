@@ -29,61 +29,9 @@
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
-    <!-- Navbar -->
-    {{-- <nav class="bg-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 flex items-center">
-                        <img src="{{ asset('img/logo.png') }}" alt="MDRRMO Logo" class="w-8 h-8 mr-2" loading="lazy">
-                        <span class="text-xl font-bold text-gray-800">MDRRMO</span>
-                    </div>
-                </div>
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-center space-x-4">
-                        <a href="#" class="text-gray-700 hover:text-brick-orange px-3 py-2 text-sm font-medium">Home</a>
-                        <a href="#" class="text-gray-700 hover:text-brick-orange px-3 py-2 text-sm font-medium">About</a>
-                        <a href="#" class="text-gray-700 hover:text-brick-orange px-3 py-2 text-sm font-medium">Contact</a>
-                    </div>
-                </div>
-                <div class="-mr-2 flex md:hidden">
-                    <button type="button" id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-brick-orange focus:outline-none">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-            </div>
-        </div> --}}
-
-        <!-- Mobile menu -->
-        {{-- <div class="md:hidden hidden" id="mobile-menu">
-            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <a href="#" class="text-gray-700 hover:text-brick-orange block px-3 py-2 text-base font-medium">Home</a>
-                <a href="#" class="text-gray-700 hover:text-brick-orange block px-3 py-2 text-base font-medium">About</a>
-                <a href="#" class="text-gray-700 hover:text-brick-orange block px-3 py-2 text-base font-medium">Contact</a>
-            </div>
-        </div>
-    </nav> --}}
-
     <!-- Main Content -->
     <main class="flex-grow flex items-center justify-center p-4">
         <div class="w-full max-w-md space-y-8">
-            <!-- Success/Error Messages -->
-            @if(session('success'))
-                <div class="alert alert-success mb-4">
-                    <i class="fas fa-check-circle mr-2"></i>
-                    {{ session('success') }}
-                </div>
-            @endif
-            
-            @if($errors->any())
-                <div class="alert alert-error mb-4">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    @foreach($errors->all() as $error)
-                        <div>{{ $error }}</div>
-                    @endforeach
-                </div>
-            @endif
-
             <form class="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" action="{{ route('login.post') }}" method="POST">
                 @csrf
                 <div class="text-center flex flex-col items-center justify-center">
@@ -91,7 +39,7 @@
                     <h2 class="mt-4 text-3xl font-extrabold text-gray-900">BukidnonAlert</h2>
                     <p class="mt-2 text-sm text-gray-600">Emergency Response Management System</p>
                 </div>
-                
+
                 <div class="rounded-md shadow-sm space-y-4">
                     <div>
                         <label for="email" class="sr-only">Email address</label>
@@ -107,7 +55,7 @@
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
-                    
+
                     <div>
                         <label for="password" class="sr-only">Password</label>
                         <div class="relative">
@@ -150,7 +98,7 @@
                 <div class="bg-gray-50 p-4 rounded-md">
                     <h3 class="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
                     <div class="text-xs text-gray-600 space-y-1">
-                       
+
                     </div>
                 </div>
             </form>
@@ -180,10 +128,54 @@
     </footer> --}}
 
     <script>
-        // Mobile menu toggle
-        document.getElementById('mobile-menu-button').addEventListener('click', function() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
+        // Toast notification functions
+        function showSuccessToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-end z-[9999]';
+            toast.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        function showErrorToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-end z-[9999]';
+            toast.innerHTML = `
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        // Auto-display session messages as toasts
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                showSuccessToast("{{ session('success') }}");
+            @endif
+
+            @if($errors->any())
+                @foreach($errors->all() as $error)
+                    showErrorToast("{{ $error }}");
+                @endforeach
+            @endif
         });
 
         // Form validation
@@ -193,9 +185,8 @@
 
             if (!email || !password) {
                 e.preventDefault();
-                alert('Please fill in all fields');
+                showErrorToast('Please fill in all fields');
             }
-            // You can add more validation here if needed
         });
     </script>
 </body>

@@ -95,7 +95,7 @@ class IncidentController extends Controller
             $incident = $incidentService->createIncident($validated);
 
             return redirect()
-                ->route('incidents.show', $incident)
+                ->route('incidents.index')
                 ->with('success', "Incident {$incident->incident_number} reported successfully!");
 
         } catch (\Exception $e) {

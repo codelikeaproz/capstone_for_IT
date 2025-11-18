@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['admin', 'staff', 'responder', 'citizen'])->default('staff');
+            $table->enum('role', ['admin', 'staff', 'responder', 'citizen','superadmin'])->default('staff');
             $table->string('municipality')->nullable(); // Municipality assignment
             $table->string('phone_number')->nullable();
             $table->text('address')->nullable();
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->timestamp('last_login')->nullable();
             $table->rememberToken();
             $table->timestamps();
-            
+
             // Indexes
             $table->index(['municipality', 'role']);
             $table->index(['role', 'is_active']);
