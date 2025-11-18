@@ -213,8 +213,8 @@ class DashboardController extends Controller
         $responseTimeData = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                                    ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
                                    ->whereNotNull('response_time')
-                                   ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, incident_date, response_time)) as avg_response_time')
-                                   ->selectRaw('DATE(incident_date) as date')
+                                   ->selectRaw('AVG(EXTRACT(EPOCH FROM (response_time - incident_date))/60) as avg_response_time')
+                                   ->selectRaw('incident_date::date as date')
                                    ->groupBy('date')
                                    ->orderBy('date')
                                    ->get();
@@ -489,7 +489,7 @@ class DashboardController extends Controller
 
         // Incident trends by day
         $incidentTrends = (clone $query)
-                         ->selectRaw('DATE(incident_date) as date, COUNT(*) as count')
+                         ->selectRaw('incident_date::date as date, COUNT(*) as count')
                          ->groupBy('date')
                          ->orderBy('date')
                          ->get();
@@ -509,8 +509,8 @@ class DashboardController extends Controller
         // Response time analysis
         $responseTimeData = (clone $query)
                            ->whereNotNull('response_time')
-                           ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, incident_date, response_time)) as avg_response_time')
-                           ->selectRaw('DATE(incident_date) as date')
+                           ->selectRaw('AVG(EXTRACT(EPOCH FROM (response_time - incident_date))/60) as avg_response_time')
+                           ->selectRaw('incident_date::date as date')
                            ->groupBy('date')
                            ->orderBy('date')
                            ->get();
@@ -528,11 +528,12 @@ class DashboardController extends Controller
         $incidents = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                             ->when($incidentType, fn($q) => $q->where('incident_type', $incidentType))
                             ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
-                            ->selectRaw('HOUR(incident_date) as hour, DAYOFWEEK(incident_date) as day_of_week, COUNT(*) as count')
+                            ->selectRaw('EXTRACT(HOUR FROM incident_date) as hour, EXTRACT(DOW FROM incident_date) as day_of_week, COUNT(*) as count')
                             ->groupBy('hour', 'day_of_week')
                             ->get();
 
-        // Initialize 24x7 grid
+        // Initialize 24x7 grid (PostgreSQL DOW: 0=Sunday, 1=Monday, ..., 6=Saturday)
+        // Convert to match MySQL format (1=Sunday, 2=Monday, ..., 7=Saturday)
         $heatmap = [];
         for ($hour = 0; $hour < 24; $hour++) {
             for ($day = 1; $day <= 7; $day++) {
@@ -540,9 +541,11 @@ class DashboardController extends Controller
             }
         }
 
-        // Fill with actual data
+        // Fill with actual data (convert PostgreSQL DOW to MySQL format)
         foreach ($incidents as $incident) {
-            $heatmap[$incident->hour][$incident->day_of_week] = $incident->count;
+            $day = $incident->day_of_week + 1; // PostgreSQL 0-6 to MySQL 1-7
+            if ($day > 7) $day = 1; // Sunday wraps around
+            $heatmap[$incident->hour][$day] = $incident->count;
         }
 
         return $heatmap;
@@ -554,7 +557,7 @@ class DashboardController extends Controller
         $municipalityPerformance = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                                           ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
                                           ->whereNotNull('response_time')
-                                          ->selectRaw('municipality, AVG(TIMESTAMPDIFF(MINUTE, incident_date, response_time)) as avg_response_time, COUNT(*) as total_incidents')
+                                          ->selectRaw('municipality, AVG(EXTRACT(EPOCH FROM (response_time - incident_date))/60) as avg_response_time, COUNT(*) as total_incidents')
                                           ->groupBy('municipality')
                                           ->orderBy('avg_response_time', 'asc')
                                           ->get();
