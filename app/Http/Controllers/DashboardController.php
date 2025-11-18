@@ -18,93 +18,93 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $municipality = $user->role === 'admin' ? null : $user->municipality;
-        
+
         // Get date range
         $dateRange = $request->get('date_range', '30'); // default 30 days
         $startDate = now()->subDays($dateRange);
-        
+
         // Core Statistics
         $stats = $this->getCoreStatistics($municipality, $startDate);
-        
+
         // Chart Data
         $chartData = $this->getChartData($municipality, $startDate);
-        
+
         // Recent Activities
         $recentIncidents = $this->getRecentIncidents($municipality);
         $recentRequests = $this->getRecentRequests($municipality);
-        
+
         // Emergency Alerts
         $alerts = $this->getEmergencyAlerts($municipality);
-        
+
         // Municipality data for admin
         $municipalityStats = $user->role === 'admin' ? $this->getMunicipalityComparison() : null;
-        
+
         return view('Dashboard.index', compact(
-            'stats', 'chartData', 'recentIncidents', 'recentRequests', 
+            'stats', 'chartData', 'recentIncidents', 'recentRequests',
             'alerts', 'municipalityStats', 'dateRange'
         ));
     }
-    
+
     public function adminDashboard()
     {
         $stats = $this->getAdminStatistics();
         $systemHealth = $this->getSystemHealth();
         $municipalityPerformance = $this->getMunicipalityPerformance();
         $userActivity = $this->getUserActivity();
-        
+
         return view('User.Admin.AdminDashboard', compact(
             'stats', 'systemHealth', 'municipalityPerformance', 'userActivity'
         ));
     }
-    
+
     public function staffDashboard()
     {
         $user = Auth::user();
         $municipality = $user->municipality;
-        
+
         $stats = $this->getStaffStatistics($municipality);
         $myIncidents = $this->getMyIncidents($user->id);
         $myRequests = $this->getMyRequests($user->id);
         $teamActivity = $this->getTeamActivity($municipality);
-        
+
         return view('User.Staff.StaffDashBoard', compact(
             'stats', 'myIncidents', 'myRequests', 'teamActivity'
         ));
     }
-    
+
     public function responderDashboard(Request $request)
     {
         $user = Auth::user();
         $municipality = $user->municipality;
-        
+
         $stats = $this->getResponderStatistics($municipality);
         $activeIncidents = $this->getActiveIncidents($municipality);
         $myVehicle = $this->getMyVehicle($user->id);
         $nearbyIncidents = $this->getNearbyIncidents($municipality);
-        
+
         // Check if request is from mobile device
         if ($this->isMobileDevice($request)) {
             return view('MobileView.responder-dashboard', compact(
                 'stats', 'activeIncidents', 'myVehicle', 'nearbyIncidents'
             ));
         }
-        
+
         return view('User.Responder.RespondersDashBoard', compact(
             'stats', 'activeIncidents', 'myVehicle', 'nearbyIncidents'
         ));
     }
-    
+
     // Analytics Methods
     private function getCoreStatistics($municipality = null, $startDate = null)
     {
         $incidentQuery = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                                 ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate));
-        
+
         $vehicleQuery = Vehicle::when($municipality, fn($q) => $q->where('municipality', $municipality));
-        
+
         $requestQuery = CitizenRequest::when($municipality, fn($q) => $q->where('municipality', $municipality))
                                      ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate));
-        
+
         return [
             'incidents' => [
                 'total' => $incidentQuery->count(),
@@ -145,7 +145,7 @@ class DashboardController extends Controller
             ],
         ];
     }
-    
+
     private function getChartData($municipality = null, $startDate = null)
     {
         // Incident trends by day
@@ -155,21 +155,21 @@ class DashboardController extends Controller
                                  ->groupBy('date')
                                  ->orderBy('date')
                                  ->get();
-        
+
         // Severity distribution
         $severityData = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                                ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
                                ->selectRaw('severity_level, COUNT(*) as count')
                                ->groupBy('severity_level')
                                ->get();
-        
+
         // Incident types
         $typeData = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                            ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
                            ->selectRaw('incident_type, COUNT(*) as count')
                            ->groupBy('incident_type')
                            ->get();
-        
+
         // Response time analysis
         $responseTimeData = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                                    ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
@@ -179,7 +179,7 @@ class DashboardController extends Controller
                                    ->groupBy('date')
                                    ->orderBy('date')
                                    ->get();
-        
+
         return [
             'trends' => $incidentTrends,
             'severity' => $severityData,
@@ -187,7 +187,7 @@ class DashboardController extends Controller
             'response_times' => $responseTimeData,
         ];
     }
-    
+
     private function getRecentIncidents($municipality = null)
     {
         return Incident::with(['assignedStaff', 'assignedVehicle'])
@@ -196,7 +196,7 @@ class DashboardController extends Controller
                       ->take(10)
                       ->get();
     }
-    
+
     private function getRecentRequests($municipality = null)
     {
         return CitizenRequest::with('assignedStaff')
@@ -205,17 +205,17 @@ class DashboardController extends Controller
                             ->take(10)
                             ->get();
     }
-    
+
     private function getEmergencyAlerts($municipality = null)
     {
         $alerts = [];
-        
+
         // Critical incidents
         $criticalIncidents = Incident::where('severity_level', 'critical')
                                    ->whereIn('status', ['pending', 'active'])
                                    ->when($municipality, fn($q) => $q->where('municipality', $municipality))
                                    ->count();
-        
+
         if ($criticalIncidents > 0) {
             $alerts[] = [
                 'type' => 'critical',
@@ -223,13 +223,13 @@ class DashboardController extends Controller
                 'count' => $criticalIncidents,
             ];
         }
-        
+
         // Low fuel vehicles
         $lowFuelVehicles = Vehicle::where('current_fuel_level', '<', 25)
                                  ->where('status', '!=', 'out_of_service')
                                  ->when($municipality, fn($q) => $q->where('municipality', $municipality))
                                  ->count();
-        
+
         if ($lowFuelVehicles > 0) {
             $alerts[] = [
                 'type' => 'warning',
@@ -237,13 +237,13 @@ class DashboardController extends Controller
                 'count' => $lowFuelVehicles,
             ];
         }
-        
+
         // Overdue maintenance
         $overdueVehicles = Vehicle::where('next_maintenance_due', '<', now())
                                  ->where('status', '!=', 'maintenance')
                                  ->when($municipality, fn($q) => $q->where('municipality', $municipality))
                                  ->count();
-        
+
         if ($overdueVehicles > 0) {
             $alerts[] = [
                 'type' => 'info',
@@ -251,10 +251,10 @@ class DashboardController extends Controller
                 'count' => $overdueVehicles,
             ];
         }
-        
+
         return $alerts;
     }
-    
+
     private function getMunicipalityComparison()
     {
         return DB::table('incidents')
@@ -267,23 +267,23 @@ class DashboardController extends Controller
                 ->orderBy('total_incidents', 'desc')
                 ->get();
     }
-    
+
     // API Methods for real-time updates
     public function getStatistics(Request $request)
     {
         $municipality = $request->get('municipality');
         $dateRange = $request->get('date_range', 30);
         $startDate = now()->subDays($dateRange);
-        
+
         $stats = $this->getCoreStatistics($municipality, $startDate);
-        
+
         return response()->json($stats);
     }
-    
+
     public function getHeatmapData(Request $request)
     {
         $municipality = $request->get('municipality');
-        
+
         $incidents = Incident::when($municipality, fn($q) => $q->where('municipality', $municipality))
                             ->whereNotNull('latitude')
                             ->whereNotNull('longitude')
@@ -298,10 +298,10 @@ class DashboardController extends Controller
                                     'type' => $incident->incident_type,
                                 ];
                             });
-        
+
         return response()->json($incidents);
     }
-    
+
     private function getSeverityWeight($severity)
     {
         return match($severity) {
@@ -312,7 +312,7 @@ class DashboardController extends Controller
             default => 0.1
         };
     }
-    
+
     // Additional helper methods for specific dashboards
     private function getAdminStatistics()
     {
@@ -325,16 +325,16 @@ class DashboardController extends Controller
             'pending_requests' => CitizenRequest::where('status', 'pending')->count(),
         ];
     }
-    
+
     private function getMyIncidents($userId)
     {
         return Incident::where('assigned_staff_id', $userId)
                       ->whereIn('status', ['pending', 'active'])
-                      ->latest('incident_date') 
+                      ->latest('incident_date')
                       ->take(5)
                       ->get();
     }
-    
+
     private function getMyRequests($userId)
     {
         return CitizenRequest::where('assigned_staff_id', $userId)
@@ -343,12 +343,12 @@ class DashboardController extends Controller
                             ->take(5)
                             ->get();
     }
-    
+
     private function getMyVehicle($userId)
     {
         return Vehicle::where('assigned_driver_id', $userId)->first();
     }
-    
+
     private function getActiveIncidents($municipality)
     {
         return Incident::where('municipality', $municipality)
@@ -357,7 +357,7 @@ class DashboardController extends Controller
                       ->take(10)
                       ->get();
     }
-    
+
     private function getNearbyIncidents($municipality)
     {
         return Incident::where('municipality', $municipality)
@@ -366,17 +366,17 @@ class DashboardController extends Controller
                       ->whereNotNull('longitude')
                       ->get();
     }
-    
+
     private function getStaffStatistics($municipality)
     {
         return $this->getCoreStatistics($municipality, now()->subDays(30));
     }
-    
+
     private function getResponderStatistics($municipality)
     {
         return $this->getCoreStatistics($municipality, now()->subDays(7));
     }
-    
+
     private function getSystemHealth()
     {
         return [
@@ -389,12 +389,12 @@ class DashboardController extends Controller
                                       ->count(),
         ];
     }
-    
+
     private function getMunicipalityPerformance()
     {
         return $this->getMunicipalityComparison();
     }
-    
+
     private function getUserActivity()
     {
         return DB::table('activity_log')
@@ -404,7 +404,7 @@ class DashboardController extends Controller
                 ->take(15)
                 ->get();
     }
-    
+
     private function getTeamActivity($municipality)
     {
         // Get recent incidents assigned to the same municipality
@@ -438,14 +438,14 @@ class DashboardController extends Controller
             'recent_activity' => $activityLogs,
         ];
     }
-    
- 
-    
+
+
+
     // Helper method to detect mobile devices
     private function isMobileDevice($request)
     {
         $userAgent = $request->header('User-Agent');
-        
+
         return preg_match('/Mobile|Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i', $userAgent);
     }
 }
