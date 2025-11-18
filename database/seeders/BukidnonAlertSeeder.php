@@ -8,6 +8,11 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\Incident;
 use App\Models\Victim;
+use App\Models\Role;
+use App\Models\Hospital;
+use App\Models\HospitalReferral;
+use App\Models\VehicleDispatch;
+use App\Models\FuelConsumption;
 use Illuminate\Support\Facades\Hash;
 
 class BukidnonAlertSeeder extends Seeder
@@ -17,6 +22,24 @@ class BukidnonAlertSeeder extends Seeder
      */
     public function run(): void
     {
+        // Get roles (seeded by migration)
+        $adminRole = Role::where('role_name', 'admin')->first();
+        $staffRole = Role::where('role_name', 'staff')->first();
+        $responderRole = Role::where('role_name', 'responder')->first();
+
+        // Create Hospitals first
+        $hospitals = [
+            ['hospital_name' => 'Bukidnon Provincial Hospital', 'contact_number' => '+63 88 813 5555', 'address' => 'Malaybalay City, Bukidnon', 'status' => 'active'],
+            ['hospital_name' => 'Bethel Baptist Hospital', 'contact_number' => '+63 88 221 4444', 'address' => 'Valencia City, Bukidnon', 'status' => 'active'],
+            ['hospital_name' => 'Maramag Community Hospital', 'contact_number' => '+63 88 834 1234', 'address' => 'Maramag, Bukidnon', 'status' => 'active'],
+            ['hospital_name' => 'Don Carlos District Hospital', 'contact_number' => '+63 88 555 0000', 'address' => 'Don Carlos, Bukidnon', 'status' => 'active'],
+            ['hospital_name' => 'Quezon Rural Health Unit', 'contact_number' => '+63 88 321 7890', 'address' => 'Quezon, Bukidnon', 'status' => 'active'],
+        ];
+
+        foreach ($hospitals as $hospitalData) {
+            Hospital::create($hospitalData);
+        }
+
         // Create Admin User
         $admin = User::create([
             'first_name' => 'System',
@@ -24,6 +47,7 @@ class BukidnonAlertSeeder extends Seeder
             'email' => 'jumaoasralph2003@gmail.com',
             'password' => Hash::make('admin123'),
             'role' => 'admin',
+            'role_id' => $adminRole->id,
             'municipality' => 'Maramag',
             'phone_number' => '+63 88 813 5772',
             'address' => 'Market, Maramag, Bukidnon',
@@ -63,6 +87,7 @@ class BukidnonAlertSeeder extends Seeder
                     'email' => $userData['email'],
                     'password' => Hash::make('password123'),
                     'role' => 'staff',
+                    'role_id' => $staffRole->id,
                     'municipality' => $municipality,
                     'phone_number' => '+63 9' . rand(100000000, 999999999),
                     'address' => $municipality . ', Bukidnon',
@@ -82,6 +107,7 @@ class BukidnonAlertSeeder extends Seeder
                     'email' => 'responder' . $i . '@' . strtolower(str_replace(' ', '', $municipality)) . '.gov.ph',
                     'password' => Hash::make('responder123'),
                     'role' => 'responder',
+                    'role_id' => $responderRole->id,
                     'municipality' => $municipality,
                     'phone_number' => '+63 9' . rand(100000000, 999999999),
                     'address' => $municipality . ', Bukidnon',
@@ -136,7 +162,7 @@ class BukidnonAlertSeeder extends Seeder
         for ($i = 1; $i <= 25; $i++) {
             $municipality = array_rand($municipalities);
             $incidentDate = now()->subDays(rand(0, 90))->subHours(rand(0, 23))->subMinutes(rand(0, 59));
-            
+
             $incident = Incident::create([
                 'incident_number' => 'INC-' . $incidentDate->year . '-' . str_pad($i, 3, '0', STR_PAD_LEFT),
                 'incident_type' => $incidentTypes[array_rand($incidentTypes)],
@@ -182,11 +208,12 @@ class BukidnonAlertSeeder extends Seeder
             $incidents[] = $incident;
         }
 
-        // Create Victims for some incidents
+        // Create Victims for some incidents with Hospital Referrals
+        $allHospitals = Hospital::all();
         foreach ($incidents as $incident) {
             if ($incident->casualty_count > 0) {
                 for ($v = 0; $v < $incident->casualty_count; $v++) {
-                    Victim::create([
+                    $victim = Victim::create([
                         'incident_id' => $incident->id,
                         'first_name' => collect(['Juan', 'Maria', 'Jose', 'Ana', 'Pedro', 'Rosa', 'Carlos', 'Elena'])->random(),
                         'last_name' => collect(['Santos', 'Garcia', 'Rodriguez', 'Cruz', 'Reyes', 'Mendoza', 'Torres', 'Flores'])->random(),
@@ -207,6 +234,66 @@ class BukidnonAlertSeeder extends Seeder
                         'victim_role' => collect(['driver', 'passenger', 'pedestrian', 'bystander'])->random(),
                         'helmet_used' => rand(0, 1),
                         'seatbelt_used' => rand(0, 1),
+                    ]);
+
+                    // Create hospital referral for injured victims
+                    if (in_array($victim->medical_status, ['minor_injury', 'major_injury', 'critical'])) {
+                        $hospital = $allHospitals->random();
+                        HospitalReferral::create([
+                            'victim_id' => $victim->id,
+                            'hospital_id' => $hospital->id,
+                            'referral_reason' => $victim->injury_description,
+                            'medical_notes' => 'Emergency treatment required',
+                            'transported_at' => now()->subMinutes(rand(10, 120)),
+                            'status' => collect(['pending', 'in_transit', 'completed'])->random(),
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Create Vehicle Dispatches and Fuel Consumption
+        foreach ($incidents as $incident) {
+            if ($incident->assigned_vehicle_id) {
+                $dispatch = VehicleDispatch::create([
+                    'vehicle_id' => $incident->assigned_vehicle_id,
+                    'incident_id' => $incident->id,
+                    'assignment_id' => $incident->assigned_staff_id,
+                    'dispatch_location' => $incident->location,
+                    'notes' => 'Emergency dispatch',
+                    'status' => match($incident->status) {
+                        'pending' => 'dispatched',
+                        'active' => 'en_route',
+                        'resolved', 'closed' => 'completed',
+                        default => 'dispatched',
+                    },
+                    'dispatched_at' => $incident->incident_date,
+                    'arrived_at' => $incident->response_time,
+                    'completed_at' => $incident->resolved_at,
+                ]);
+
+                // Attach responders to dispatch
+                $vehicle = Vehicle::find($incident->assigned_vehicle_id);
+                if ($vehicle && $vehicle->assigned_driver_id) {
+                    $dispatch->responders()->attach($vehicle->assigned_driver_id, [
+                        'position' => 'Driver',
+                        'notes' => 'Primary driver',
+                    ]);
+                }
+
+                // Create fuel consumption record for completed dispatches
+                if ($dispatch->status === 'completed') {
+                    $distance = rand(5, 50);
+                    $fuelConsumed = round($distance / rand(8, 12), 2);
+
+                    FuelConsumption::create([
+                        'dispatch_id' => $dispatch->id,
+                        'distance_traveled' => $distance,
+                        'fuel_consumed' => $fuelConsumed,
+                        'fuel_price_per_liter' => 60.00,
+                        'total_cost' => $fuelConsumed * 60.00,
+                        'fuel_type' => 'diesel',
+                        'timestamp' => $dispatch->completed_at ?? now(),
                     ]);
                 }
             }

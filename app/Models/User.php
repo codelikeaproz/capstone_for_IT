@@ -31,6 +31,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'role',
+        'role_id',
         'municipality',
         'phone_number',
         'address',
@@ -83,6 +84,11 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     // Relationships
+    public function role(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
     public function reportedIncidents(): HasMany
     {
         return $this->hasMany(Incident::class, 'reported_by');
@@ -106,6 +112,23 @@ class User extends Authenticatable implements MustVerifyEmail
     public function assignedRequests(): HasMany
     {
         return $this->hasMany(Request::class, 'assigned_staff_id');
+    }
+
+    public function vehicleDispatches(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(VehicleDispatch::class, 'assignment_id');
+    }
+
+    public function dispatchedAs(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(VehicleDispatch::class, 'dispatched_responders', 'responder_id', 'dispatch_id')
+            ->withPivot(['team_unit', 'position', 'notes'])
+            ->withTimestamps();
+    }
+
+    public function generatedReports(): HasMany
+    {
+        return $this->hasMany(Report::class, 'generated_by');
     }
 
     // Scopes

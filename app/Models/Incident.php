@@ -113,6 +113,22 @@ class Incident extends Model
         return $this->hasMany(Victim::class);
     }
 
+    public function vehicleDispatches(): HasMany
+    {
+        return $this->hasMany(VehicleDispatch::class);
+    }
+
+    public function reports(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Report::class, 'incident_report', 'incident_id', 'report_id')
+            ->withTimestamps();
+    }
+
+    public function reportRequests(): HasMany
+    {
+        return $this->hasMany(Request::class, 'incident_id');
+    }
+
     // Scopes
     public function scopeByMunicipality($query, $municipality)
     {

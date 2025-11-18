@@ -42,6 +42,16 @@ class Victim extends Model
         return $this->belongsTo(Incident::class);
     }
 
+    public function hospitalReferrals(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(HospitalReferral::class);
+    }
+
+    public function reportRequests(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Request::class, 'victim_id');
+    }
+
     // Accessors
     public function getFullNameAttribute()
     {

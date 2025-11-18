@@ -24,6 +24,8 @@ class Request extends Model
         'request_description',
         'purpose_of_request',
         'incident_case_number',
+        'incident_id',
+        'victim_id',
         'incident_date',
         'incident_location',
         'municipality',
@@ -72,6 +74,21 @@ class Request extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function incident(): BelongsTo
+    {
+        return $this->belongsTo(Incident::class, 'incident_id');
+    }
+
+    public function victim(): BelongsTo
+    {
+        return $this->belongsTo(Victim::class, 'victim_id');
+    }
+
+    public function feedback(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Feedback::class, 'request_id');
     }
 
     // Scopes

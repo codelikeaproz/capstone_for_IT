@@ -24,7 +24,8 @@
       "Bash(git rm:*)",
       "Bash(PRD_OLD.md)",
       "Bash(git fetch:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(del \"database\\migrations\\2025_11_19_013834_add_normalized_foreign_keys_to_existing_tables.php\")"
     ],
     "deny": [],
     "ask": []

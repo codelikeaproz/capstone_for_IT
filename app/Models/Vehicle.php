@@ -90,6 +90,16 @@ class Vehicle extends Model
         return $this->hasMany(VehicleUtilization::class);
     }
 
+    public function dispatches(): HasMany
+    {
+        return $this->hasMany(VehicleDispatch::class);
+    }
+
+    public function fuelConsumptions(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(FuelConsumption::class, VehicleDispatch::class, 'vehicle_id', 'dispatch_id');
+    }
+
     // Scopes
     public function scopeAvailable($query)
     {
