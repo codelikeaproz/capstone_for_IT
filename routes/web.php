@@ -144,9 +144,7 @@ Route::middleware('auth')->group(function () {
     // ====================
     Route::get('/heat-maps', [HeatmapController::class, 'index'])->name('heatmaps');
 
-    Route::get('/analytics', function () {
-        return view('Analytics.Dashboard');
-    })->name('analytics.dashboard');
+    Route::get('/analytics', [DashboardController::class, 'analytics'])->name('analytics.dashboard');
 
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
     Route::post('/reports/generate', [ReportsController::class, 'generate'])->name('reports.generate');
